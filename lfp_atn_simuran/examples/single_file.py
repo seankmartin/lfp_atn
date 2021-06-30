@@ -170,8 +170,6 @@ def main(set_file_location, output_location, do_analysis=False, min_f=0.5, max_f
         os.makedirs(output_location, exist_ok=True)
 
         # First plot the LFP signal
-        # TODO can I make this clean easier???
-
         clean_kwargs = {"channels": [17, 18, 19, 20]}
         for clean_method in ("avg", "pick"):
             analyse_recording(

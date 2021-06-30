@@ -153,7 +153,6 @@ def lfp_rate(self, lfp_signal, low_f=None, high_f=None, filter_kwargs=None, **kw
     for i, t in enumerate(time_to_use):
         low_sample = floor((t - 0.05) * lfp_signal.get_sampling_rate())
         high_sample = ceil((t + 0.05) * lfp_signal.get_sampling_rate())
-        # TODO abs gives magnitude
         if high_sample < len(lfp_samples):
             lfp_amplitudes[i] = np.mean(
                 np.abs(lfp_samples[low_sample : high_sample + 1])

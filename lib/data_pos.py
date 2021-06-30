@@ -272,7 +272,6 @@ class RecPos:
 
     def calculate_position(self, raw=False):
         # TODO include the checking for big-small mix ups
-        # TODO add verbose reading like TINT
         try:
             count_missing = 0
             bxx, sxx = [], []

@@ -21,7 +21,6 @@ def create_mne_array(recording, ch_names=None):
     mne.io.RawArray
 
     """
-    # TODO work with quantities here to avoid magic division to uV
     raw_data = recording.get_np_signals() / 1000
 
     if ch_names is None:
@@ -81,7 +80,6 @@ def ICA_pipeline(
         ica.plot_sources(filt_raw)
 
         # Overlay ICA cleaned signal over raw. Seperate plot for each region.
-        # TODO Add scroll bar or include window selection option.
         cont = input("Plot region overlay? (y|n) \n")
         if cont.strip().lower() == "y":
             reg_grps = []

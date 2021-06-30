@@ -15,6 +15,7 @@ import pandas as pd
 import scipy.stats
 
 from lfp_atn_simuran.analysis.lfp_clean import LFPClean
+from lfp_atn_simuran.analysis.parse_cfg import parse_cfg_info
 
 # 1. Compare speed and firing rate
 def speed_firing(self, spike_train, **kwargs):
@@ -210,7 +211,6 @@ def speed_lfp_amp(
     speed_sr=10,
     **kwargs,
 ):
-    # TODO should get this to work with non-NC
     clean_kwargs = kwargs.get("clean_kwargs", {})
     lc = LFPClean(method=clean_method, visualise=False)
     signals_grouped_by_region = lc.clean(
@@ -254,8 +254,8 @@ def speed_lfp_amp(
 
 
 def define_recording_group(base_dir):
-    # TODO change this to allow running on other places
-    main_dir = r"D:\SubRet_recordings_imaging"
+    config = parse_cfg_info()
+    main_dir = config["cfg_base_dir"]
     dirs = base_dir[len(main_dir + os.sep) :].split(os.sep)
     dir_to_check = dirs[0]
     if dir_to_check.startswith("CS"):
