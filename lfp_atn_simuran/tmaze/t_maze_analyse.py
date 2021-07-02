@@ -1,6 +1,6 @@
 import os
 from site import addsitedir
-from json import loads
+from math import floor, ceil
 
 import simuran
 import pandas as pd
@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 import astropy.units as u
 from neurochat.nc_lfp import NLfp
 import numpy as np
+from scipy.signal import coherence
+from skm_pyutils.py_table import list_to_df
+import seaborn as sns
 
 try:
     from lfp_atn_simuran.analysis.lfp_clean import LFPClean
@@ -33,12 +36,19 @@ def main(excel_location, base_dir):
     delta_max = cfg["delta_max"]
     theta_min = cfg["theta_min"]
     theta_max = cfg["theta_max"]
-    window_sec = 2
+    window_sec = 1
+    fmin, fmax = 1, 40
 
     ituples = df.itertuples()
     num_rows = len(df)
 
+    no_pass = False
+    if "passed" not in df.columns:
+        print("Please add passed as a column to the df.")
+        no_pass = True
+
     results = []
+    coherence_df_list = []
     for j in range(num_rows // 2):
         row1 = next(ituples)
         row2 = next(ituples)
@@ -53,17 +63,36 @@ def main(excel_location, base_dir):
         lfp_clean = LFPClean(method="pick", visualise=False)
         clean_kwargs = cfg["clean_kwargs"]
         sig_dict = lfp_clean.clean(
-            recording, min_f=0.5, max_f=100, method_kwargs=clean_kwargs
+            recording, min_f=fmin, max_f=fmax, method_kwargs=clean_kwargs
         )["signals"]
+
+        x = np.array(sig_dict["SUB"].samples.to(u.mV))
+        y = np.array(sig_dict["RSC"].samples.to(u.mV))
+        fs = sig_dict["SUB"].sampling_rate
+        f, Cxy = coherence(x, y, fs, nperseg=2 * fmax)
+        f = f[np.nonzero((f >= fmin) & (f <= fmax))]
+        Cxy = Cxy[np.nonzero((f >= fmin) & (f <= fmax))]
+
+        max_theta_coherence_ = max(
+            Cxy[np.nonzero((f >= theta_min) & (f <= theta_max))]
+        )
+        max_delta_coherence_ = max(
+            Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
+        )
 
         fig, ax = plt.subplots()
         for r in (row1, row2):
-            t1, t2 = r.start, r.end
-            lfpt1, lfpt2 = int(t1 * 250), int(t2 * 250)
+            # end or choice could be used
+            # t1, t2 = r.start, r.end
+            t1, t2 = r.start, r.choice
+            t3 = r.end
+            lfpt1, lfpt2 = int(floor(t1 * 250)), int(ceil(t2 * 250))
 
-            st1, st2 = int(t1 * 50), int(t2 * 50)
+            st1, st2 = int(floor(t1 * 50)), int(ceil(t3 * 50))
             x_time = spatial.get_pos_x()[st1:st2]
             y_time = spatial.get_pos_y()[st1:st2]
+            c_end = int(floor(t2 * 50))
+            spat_c = (spatial.get_pos_x()[c_end], spatial.get_pos_y()[c_end])
 
             if r.test == "first":
                 c = "k"
@@ -71,13 +100,14 @@ def main(excel_location, base_dir):
                 c = "r"
 
             ax.plot(x_time, y_time, c=c, label=r.test)
+            ax.plot(spat_c[0], spat_c[1], c="b", marker="x")
 
             res_dict = {}
             for region, signal in sig_dict.items():
                 lfp = NLfp()
                 lfp.set_channel_id(signal.channel)
-                lfp._timestamp = np.array(signal.timestamps[lfpt1:lfpt2] * u.mV)
-                lfp._samples = np.array(signal.samples[lfpt1:lfpt2] * u.s)
+                lfp._timestamp = np.array(signal.timestamps[lfpt1:lfpt2].to(u.s))
+                lfp._samples = np.array(signal.samples[lfpt1:lfpt2].to(u.mV))
                 lfp._record_info["Sampling rate"] = signal.sampling_rate
                 delta_power = lfp.bandpower(
                     [delta_min, delta_max], window_sec=window_sec, band_total=True
@@ -96,8 +126,44 @@ def main(excel_location, base_dir):
                 res_dict["RSC_theta"],
             ]
             results.append(res_list)
-
             name = os.path.splitext(r.location)[0]
+
+            x = np.array(sig_dict["SUB"].samples[lfpt1:lfpt2].to(u.mV))
+            y = np.array(sig_dict["RSC"].samples[lfpt1:lfpt2].to(u.mV))
+            fs = sig_dict["SUB"].sampling_rate
+
+            f, Cxy = coherence(x, y, fs, nperseg=2 * fmax)
+            f = f[np.nonzero((f >= fmin) & (f <= fmax))]
+            Cxy = Cxy[np.nonzero((f >= fmin) & (f <= fmax))]
+
+            max_theta_coherence = max(
+                Cxy[np.nonzero((f >= theta_min) & (f <= theta_max))]
+            )
+            max_delta_coherence = max(
+                Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
+            )
+
+            fig2, ax2 = plt.subplots(3, 1)
+            ax2[0].plot(f, Cxy, c="k")
+            ax2[1].plot([i / 250 for i in range(len(x))], x, c="k")
+            ax2[2].plot([i / 250 for i in range(len(y))], y, c="k")
+            base_dir_new = os.path.dirname(excel_location)
+            fig2.savefig(
+                os.path.join(
+                    base_dir_new,
+                    "coherence_{}_{}_{}.png".format(row1.location, r.session, r.test),
+                )
+            )
+            plt.close(fig2)
+            res_list += [max_theta_coherence, max_delta_coherence]
+            res_list += [max_theta_coherence_, max_delta_coherence_]
+
+            if no_pass is False:
+                group = (
+                    "Control" if r.animal.lower().startswith("c") else "Lesion (ATNx)"
+                )
+                for f_, cxy_ in zip(f, Cxy):
+                    coherence_df_list.append((f_, cxy_, r.passed, group))
 
         ax.invert_yaxis()
         ax.legend()
@@ -115,6 +181,10 @@ def main(excel_location, base_dir):
         "SUB_theta",
         "RSC_delta",
         "RSC_theta",
+        "Theta_coherence",
+        "Delta_coherence",
+        "Full_theta_coherence",
+        "Full_delta_coherence",
     ]
 
     df = pd.DataFrame(results, columns=headers)
@@ -123,10 +193,19 @@ def main(excel_location, base_dir):
     out_name = split[0] + "_results" + split[1]
     df.to_excel(out_name, index=False)
 
+    if no_pass is False:
+        headers = ["Frequency (Hz)", "Coherence", "Choice", "Group"]
+        df = list_to_df(coherence_df_list, headers=headers)
+
+        sns.lineplot(
+            data=df, x="Frequency (Hz)", y="Coherence", hue="Group", style="Choice"
+        )
+        plt.savefig(os.path.join(os.path.dirname(excel_location), "coherence"))
+
 
 if __name__ == "__main__":
     here = os.path.dirname(os.path.abspath(__file__))
-    main_output_location = os.path.join(here, "results", "tmaze")
+    main_output_location = os.path.join(here, "results")
 
     base_dir = r"D:\SubRet_recordings_imaging"
     xls_location = os.path.join(main_output_location, "tmaze-times.xlsx")
