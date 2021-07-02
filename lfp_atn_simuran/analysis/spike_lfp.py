@@ -96,19 +96,15 @@ def combine_results(info, extra):
     out_dir, filename = extra
     base, ext = os.path.splitext(os.path.basename(filename))
 
-    new_list1 = []
-    new_list2 = []
-
     here = os.path.dirname(os.path.abspath(__file__))
     cell_list_location = os.path.join(
         here, "..", "cell_lists", "CTRL_Lesion_cells_filled_eeg.xlsx"
     )
     df = pd.read_excel(cell_list_location)
 
-    # later grab the cell type
-    print(info.columns)
-
     for out_region in ["sub", "rsc"]:
+        new_list1 = []
+        new_list2 = []
         for row in info.itertuples():
             dir_ = row.Directory[len(base_dir + os.sep) :]
             group = dir_[0]
@@ -139,6 +135,8 @@ def combine_results(info, extra):
                 .values.flatten()[0]
                 .split("_")[0]
             )
+            if group == "ATNx (Lesion)" and spatial == "S":
+                raise RuntimeError("Incorrect parsing")
 
             for i in range(len(sta)):
                 new_list1.append([group, float(sta[i]), float(t[i]), spatial])

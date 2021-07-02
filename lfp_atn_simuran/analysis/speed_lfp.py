@@ -3,6 +3,7 @@ from copy import deepcopy
 from math import floor, ceil
 import os
 import seaborn as sns
+from icecream import ic
 
 from neurochat.nc_utils import butter_filter
 import matplotlib.pyplot as plt
@@ -233,7 +234,7 @@ def speed_lfp_amp(
 
     # Figures
     simuran.set_plot_style()
-    for name, signal in signals_grouped_by_region.items():  #
+    for name, signal in signals_grouped_by_region.items():
         lfp_signal = signal
 
         # Speed vs LFP power
@@ -264,7 +265,9 @@ def define_recording_group(base_dir):
         group = "Lesion"
     else:
         group = "Undefined"
-    return group
+
+    number = int(dir_to_check.split("_")[0][-1])
+    return group, number
 
 
 def combine_results(info, extra_info):
@@ -282,7 +285,15 @@ def combine_results(info, extra_info):
         r_les = 0
         for item_dict, fname in zip(item_list, fname_list):
             item_dict = item_dict["speed_lfp_amp"]
-            data_set = define_recording_group(os.path.dirname(fname))
+            data_set, number = define_recording_group(os.path.dirname(fname))
+
+            # if number >= 4:
+            #     continue
+
+            # Skip LSR7 if present
+            if number == 7:
+                continue
+
             if data_set == "Control":
                 r_ctrl += 1
             else:
@@ -292,17 +303,30 @@ def combine_results(info, extra_info):
                 id_ = item_dict[r + "_df"]
                 id_["Group"] = data_set
                 id_["region"] = r
+                id_["number"] = number
                 df_lists.append(id_)
 
+            # ic(
+            #     fname,
+            #     data_set,
+            #     number,
+            #     item_dict["mean_speed"],
+            #     len(item_dict["RSC_df"]),
+            # )
         n_ctrl_animals += r_ctrl / len(fname_list)
         n_lesion_animals += r_les / len(fname_list)
+
     print(f"{n_ctrl_animals} CTRL animals, {n_lesion_animals} Lesion animals")
 
     df = pd.concat(df_lists, ignore_index=True)
-    df.replace("Control", "Control (ATN,   N = 6)", inplace=True)
-    df.replace("Lesion", "Lesion  (ATNx, N = 6)", inplace=True)
+    df.replace("Control", f"Control (ATN,   N = {int(n_ctrl_animals)})", inplace=True)
+    df.replace("Lesion", f"Lesion  (ATNx, N = {int(n_lesion_animals)})", inplace=True)
 
     print("Saving plots to {}".format(os.path.join(out_dir, "summary")))
+
+    control_df = df[df["Group"] == f"Lesion  (ATNx, N = {int(n_lesion_animals)})"]
+    sub_df = control_df[control_df["region"] == "RSC"]
+    print(sub_df.groupby("Speed").mean())
     for ci, oname in zip([95, None], ["_ci", ""]):
         sns.lineplot(
             data=df[df["region"] == "SUB"],
@@ -312,6 +336,7 @@ def combine_results(info, extra_info):
             hue="Group",
             ci=ci,
             estimator=np.median,
+            # estimator="mean",
         )
         simuran.despine()
         plt.xlabel("Speed (cm / s)")
@@ -336,6 +361,7 @@ def combine_results(info, extra_info):
             hue="Group",
             ci=ci,
             estimator=np.median,
+            # estimator="mean",
         )
         simuran.despine()
         plt.xlabel("Speed (cm / s)")
