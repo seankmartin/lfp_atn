@@ -1,6 +1,7 @@
 """Clean LFP signals."""
 from collections import OrderedDict
 import logging
+from copy import deepcopy
 
 import numpy as np
 import simuran
@@ -35,10 +36,12 @@ def detect_outlying_signals(signals, z_threshold=1.1):
     # Use this with axis = 0 for per signal
     std_sig = np.where(std_sig == 0, 1, std_sig)
 
-    z_score_abs = np.zeros(shape=(len(signals), len(signals[0])))
+    z_scores = np.zeros(shape=(len(signals), len(signals[0])))
 
     for i, s in enumerate(signals):
-        z_score_abs[i] = np.abs(s - avg_sig) / std_sig
+        z_scores[i] = (s - avg_sig) / std_sig
+
+    z_score_abs = np.abs(z_scores)
 
     z_score_means = np.nanmean(z_score_abs, axis=1)
     z_threshold = z_threshold * np.median(z_score_means)
@@ -56,7 +59,7 @@ def detect_outlying_signals(signals, z_threshold=1.1):
     if len(good) == 0:
         raise RuntimeError(f"No good signals found, bad were {bad}")
 
-    return good_signals, bad_signals, good, bad
+    return good_signals, bad_signals, good, bad, z_scores
 
 
 def average_signals(signals, z_threshold=1.1, verbose=False, clean=True):
@@ -90,7 +93,7 @@ def average_signals(signals, z_threshold=1.1, verbose=False, clean=True):
 
     # 1. Try to identify dead channels
     if clean:
-        good_signals, bad_signals, good_idx, bad_idx = detect_outlying_signals(
+        good_signals, bad_signals, good_idx, bad_idx, _ = detect_outlying_signals(
             signals_, z_threshold=z_threshold
         )
         if verbose:
@@ -113,6 +116,46 @@ def average_signals(signals, z_threshold=1.1, verbose=False, clean=True):
         return avg_sig, bad_idx
 
 
+def z_score_signals(signals, z_threshold=1.1, verbose=False, clean=True):
+    if type(signals) is not np.ndarray:
+        signals_ = np.array(signals)
+    else:
+        signals_ = signals
+
+    avg_sig = np.mean(signals_, axis=1)
+    std_sig = np.std(signals_, axis=1)
+    # Use this with axis = 0 for per signal
+    std_sig = np.where(std_sig == 0, 1, std_sig)
+
+    z_scores = np.zeros(shape=(len(signals_), len(signals_[0])))
+
+    for i, s in enumerate(signals_):
+        z_scores[i] = (s - avg_sig[i]) / std_sig[i]
+
+
+    # 1. Try to identify dead channels
+    if clean:
+        good_signals, bad_signals, good_idx, bad_idx, _ = detect_outlying_signals(
+            signals_, z_threshold=z_threshold
+        )
+        if verbose:
+            if len(bad_idx) != 0:
+                print(
+                    "Excluded {} signals with indices {}".format(len(bad_idx), bad_idx)
+                )
+        z_scores = z_scores[good_idx]
+    else:
+        bad_idx = []
+    
+    res = np.mean(z_scores, axis=0)
+    
+    # Technically, the signals are now dimensionless
+    if hasattr(signals[0], "unit"):
+        return (res * signals[0].unit), bad_idx, z_scores
+    else:
+        return res, bad_idx, z_scores
+
+
 class LFPClean(object):
     """
     Class to clean LFP signals.
@@ -121,7 +164,7 @@ class LFPClean(object):
     ----------
     method : string
         The method to use for cleaning.
-        Currently supports "avg".
+        Currently supports "avg", "zscore", "avg_raw", "ica", "pick".
     visualise : bool
         Whether to visualise the cleaning.
 
@@ -129,7 +172,7 @@ class LFPClean(object):
     ----------
     method : string
         The method to use for cleaning.
-        Currently supports "avg".
+        Currently supports "avg", "zscore", "avg_raw", "ica", "pick".
     visualise : bool
         Whether to visualise the cleaning.
     show_vis : bool
@@ -181,11 +224,11 @@ class LFPClean(object):
 
         Returns
         -------
-        dict with keys "signals", "fig"
+        dict with keys "signals", "fig", "cleaned", "zscored"
 
         """
         bad_chans = None
-        results = {"signals": None, "fig": None, "cleaned": None}
+        results = {"signals": None, "fig": None, "cleaned": None, "zscored": None}
         if method_kwargs is None:
             method_kwargs = {}
         if isinstance(data, simuran.Recording):
@@ -209,6 +252,17 @@ class LFPClean(object):
                 z_threshold=z_threshold,
                 **filter_kwargs,
             )
+        elif self.method == "zscore":
+            z_threshold = method_kwargs.get("z_threshold", 1.1)
+            result, bad_chans, zscores = self.z_score_method(
+                signals,
+                min_f,
+                max_f,
+                clean=True,
+                z_threshold=z_threshold,
+                **filter_kwargs,
+            )
+            results["zscored"] = zscores
         elif self.method == "avg_raw":
             result, _ = self.avg_method(
                 signals, min_f, max_f, clean=False, **filter_kwargs
@@ -234,7 +288,8 @@ class LFPClean(object):
 
         results["signals"] = result
         if self.visualise:
-            fig = self.vis_cleaning(result, signals, bad_chans=bad_chans)
+            kwargs = {}
+            fig = self.vis_cleaning(result, signals, bad_chans=bad_chans, **kwargs)
 
             fig = simuran.SimuranFigure(fig, done=True)
 
@@ -242,11 +297,22 @@ class LFPClean(object):
 
         return results
 
-    def vis_cleaning(self, result, signals, bad_chans=None):
+    def vis_cleaning(self, result, signals, bad_chans=None, **kwargs):
+        if self.method == "zscore":
+            signals_ = deepcopy(signals)
+            for i in range(len(signals_)):
+                val = np.array(signals_[i].samples)
+                div = np.std(val)
+                div = np.where(div == 0, 1, div)
+                mean = np.mean(val)
+                signals_[i].samples = ((val - mean) / div) * signals_[i].samples.unit
+        else:
+            signals_ = signals
+
         if isinstance(result, dict):
             eeg_array = simuran.EegArray()
-            _, eeg_idxs = signals.group_by_property("channel_type", "eeg")
-            eeg_sigs = signals.subsample(idx_list=eeg_idxs, inplace=False)
+            _, eeg_idxs = signals_.group_by_property("channel_type", "eeg")
+            eeg_sigs = signals_.subsample(idx_list=eeg_idxs, inplace=False)
             eeg_array.set_container([simuran.Eeg(signal=eeg) for eeg in eeg_sigs])
 
             for k, v in result.items():
@@ -258,6 +324,36 @@ class LFPClean(object):
         fig = eeg_array.plot(proj=False, show=self.show_vis, bad_chans=bad_chans)
 
         return fig
+
+    def z_score_method(
+        self, signals, min_f, max_f, clean=True, z_threshold=1.1, **filter_kwargs
+    ):
+        lfp_signals = signals
+
+        signals_grouped_by_region = lfp_signals.split_into_groups("region")
+
+        output_dict = OrderedDict()
+        z_score_dict = OrderedDict()
+
+        bad_chans = []
+        for region, (signals, _) in signals_grouped_by_region.items():
+            val, bad_idx, zscores = z_score_signals(
+                [s.samples for s in signals],
+                z_threshold=z_threshold,
+                verbose=True,
+                clean=clean,
+            )
+            eeg = simuran.Eeg()
+            eeg.from_numpy(val, sampling_rate=signals[0].sampling_rate)
+            eeg.set_region(region)
+            eeg.set_channel("avg")
+            if min_f is not None:
+                eeg.filter(min_f, max_f, inplace=True, **filter_kwargs)
+            output_dict[region] = eeg
+            z_score_dict[region] = zscores
+            bad_chans += [signals[i].channel for i in bad_idx]
+
+        return output_dict, bad_chans, z_score_dict
 
     def avg_method(
         self, signals, min_f, max_f, clean=True, z_threshold=1.1, **filter_kwargs
