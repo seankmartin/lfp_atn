@@ -122,6 +122,12 @@ def z_score_signals(signals, z_threshold=1.1, verbose=False, clean=True):
     else:
         signals_ = signals
 
+    # Like this will z-score before check
+    # for i in range(len(signals_)):
+    #     div = np.std(signals_[i])
+    #     div = np.where(div == 0, 1, div)
+    #     signals_[i] = (signals_[i] - np.mean(signals_[i])) / div
+
     avg_sig = np.mean(signals_, axis=1)
     std_sig = np.std(signals_, axis=1)
     # Use this with axis = 0 for per signal
@@ -131,7 +137,6 @@ def z_score_signals(signals, z_threshold=1.1, verbose=False, clean=True):
 
     for i, s in enumerate(signals_):
         z_scores[i] = (s - avg_sig[i]) / std_sig[i]
-
 
     # 1. Try to identify dead channels
     if clean:
@@ -147,13 +152,17 @@ def z_score_signals(signals, z_threshold=1.1, verbose=False, clean=True):
     else:
         bad_idx = []
     
-    res = np.mean(z_scores, axis=0)
+    for i in range(len(signals_)):
+        div = np.std(signals_[i])
+        div = np.where(div == 0, 1, div)
+        signals_[i] = (signals_[i] - np.mean(signals_[i])) / div
+    res = np.mean(signals_, axis=0)
     
     # Technically, the signals are now dimensionless
     if hasattr(signals[0], "unit"):
-        return (res * signals[0].unit), bad_idx, z_scores
+        return (res * signals[0].unit), bad_idx, signals_
     else:
-        return res, bad_idx, z_scores
+        return res, bad_idx, signals_
 
 
 class LFPClean(object):
