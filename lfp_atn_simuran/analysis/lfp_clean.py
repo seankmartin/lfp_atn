@@ -209,7 +209,6 @@ class LFPClean(object):
                 z_threshold=z_threshold,
                 **filter_kwargs,
             )
-            results["bad_channels"] = [signals[i].channel for i in bad_chans]
         elif self.method == "avg_raw":
             result, _ = self.avg_method(
                 signals, min_f, max_f, clean=False, **filter_kwargs
@@ -281,7 +280,8 @@ class LFPClean(object):
             eeg.from_numpy(val, sampling_rate=signals[0].sampling_rate)
             eeg.set_region(region)
             eeg.set_channel("avg")
-            eeg.filter(min_f, max_f, inplace=True, **filter_kwargs)
+            if min_f is not None:
+                eeg.filter(min_f, max_f, inplace=True, **filter_kwargs)
             output_dict[region] = eeg
             bad_chans += [signals[i].channel for i in bad_idx]
 
