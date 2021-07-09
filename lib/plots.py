@@ -50,6 +50,7 @@ def plot_mne(raw_array, base_name):
 def plot_pos_over_time(x, y, rate=2, save=False):
     fig, ax = plt.subplots(figsize=(8, 8))
     (scatter,) = ax.plot([], [], "ko")
+    (scatter2,) = ax.plot([], [], "bx", markersize=14, mew=10)
     time_text = ax.text(0.02, 0.95, "", transform=ax.transAxes)
     frame_time = 0
     n_pressed = 0
@@ -82,6 +83,14 @@ def plot_pos_over_time(x, y, rate=2, save=False):
             # skip 30 seconds ahead
             frame += 27 * 50
         scatter.set_data(x[0:frame], y[0:frame])
+
+        other_data_x = []
+        other_data_y = []
+        for t in saved_times:
+            other_data_x.append(x[int(t * 50)])
+            other_data_y.append(y[int(t * 50)])
+        scatter2.set_data(other_data_x, other_data_y)
+
         # 50 is the sampling rate
         frame_time = frame / 50
         time_text.set_text(f"time = {frame_time}")
