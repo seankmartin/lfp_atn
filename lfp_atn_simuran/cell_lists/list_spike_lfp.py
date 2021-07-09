@@ -14,7 +14,20 @@ def main():
     out_dir = os.path.abspath(os.path.join(here, "..", "sim_results", herename))
     os.makedirs(out_dir, exist_ok=True)
     cell_list = os.path.join(here, "CTRL_Lesion_cells_filled_eeg.xlsx")
-    headers = ["STA_SUB", "SFC_SUB", "STA_RSC", "SFC_RSC", "Time", "Frequency"]
+    headers = [
+        "STA_SUB",
+        "SFC_SUB",
+        "STA_RSC",
+        "SFC_RSC",
+        "Time",
+        "Frequency",
+        "Mean_Phase_SUB",
+        "Mean_Phase_Count_SUB",
+        "Resultant_Phase_Vector_SUB",
+        "Mean_Phase_RSC",
+        "Mean_Phase_Count_RSC",
+        "Resultant_Phase_Vector_RSC",
+    ]
     simuran.analyse_cell_list(
         cell_list,
         recording_spike_lfp,

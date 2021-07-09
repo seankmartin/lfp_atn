@@ -1,4 +1,5 @@
 from copy import deepcopy
+import os
 
 import simuran
 import numpy as np
@@ -9,6 +10,36 @@ from skm_pyutils.py_table import list_to_df
 from skm_pyutils.py_plot import UnicodeGrabber
 
 import matplotlib.pyplot as plt
+
+here = os.path.dirname(os.path.abspath(__file__))
+output_dir = os.path.abspath(os.path.join(here, "..", "sim_results", "spike_phase"))
+
+
+def plot_phase(graph_data):
+    phBins = graph_data['phBins']
+    phCount = graph_data['phCount']
+
+    fig = plt.figure()
+    ax = fig.add_subplot(projection="polar")
+    ax.bar(
+        phBins * np.pi / 180,
+        phCount,
+        width=3 * np.pi / 180,
+        color="k",
+        alpha=0.8,
+        bottom=np.max(phCount) / 2,
+        rasterized=True,
+    )
+    ax.plot(
+        [0, graph_data["meanTheta"]],
+        [0, 1.5 * np.max(phCount)],
+        linewidth=3,
+        color="red",
+        linestyle="--",
+    )
+    plt.title("LFP phase distribution (red= mean direction)")
+
+    return fig
 
 
 def recording_spike_lfp(recording, clean_method="avg", **kwargs):
@@ -24,6 +55,10 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
 
     simuran.set_plot_style()
     fmt = kwargs.get("image_format", "png")
+    fwin = (kwargs.get("theta_min", 6), kwargs.get("theta_max", 10))
+    base_dir = kwargs.get("cfg_base_dir")
+    name_start = recording.get_name_for_save(base_dir)
+    os.makedirs(output_dir, exist_ok=True)
 
     sub_sig = signals_grouped_by_region["SUB"]
     rsc_sig = signals_grouped_by_region["RSC"]
@@ -32,7 +67,7 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
     nc_sig = sub_sig.to_neurochat()
     nc_sig2 = rsc_sig.to_neurochat()
 
-    NUM_RESULTS = 6
+    NUM_RESULTS = 12
 
     output = {}
     # To avoid overwriting what has been set to analyse
@@ -65,9 +100,9 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
                 continue
 
             unit.underlying.set_unit_no(cell)
-            # Do analysis on that unit
             spike_train = unit.underlying.get_unit_stamp()
 
+            # Do analysis on that unit
             g_data = nc_sig.plv(spike_train, mode="bs", fwin=[0, 20])
             sta = g_data["STAm"]
             sfc = g_data["SFCm"]
@@ -77,7 +112,42 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
             t = g_data["t"]
             f = g_data["f"]
 
-            output[name_for_save] = [sta, sfc, sta_rsc, sfc_rsc, t, f]
+            g_data = nc_sig.phase_dist(spike_train, fwin=fwin)
+            mean_phase = nc_sig.get_results()["LFP Spike Mean Phase"]
+            phase_count = nc_sig.get_results()["LFP Spike Mean Phase Count"]
+            spike_phase_vect = nc_sig.get_results()["LFP Spike Phase Res Vect"]
+            name = os.path.join(
+                output_dir, f"{name_start}_{name_for_save}_SUB_Phase.{fmt}"
+            )
+            fig = plot_phase(g_data)
+            fig.savefig(name, dpi=400)
+            plt.close(fig)
+
+            g_data = nc_sig2.phase_dist(spike_train, fwin=fwin)
+            mean_phase2 = nc_sig2.get_results()["LFP Spike Mean Phase"]
+            phase_count2 = nc_sig2.get_results()["LFP Spike Mean Phase Count"]
+            spike_phase_vect2 = nc_sig2.get_results()["LFP Spike Phase Res Vect"]
+            name = os.path.join(
+                output_dir, f"{name_start}_{name_for_save}_RSC_Phase.{fmt}"
+            )
+            fig = plot_phase(g_data)
+            fig.savefig(name, dpi=400)
+            plt.close(fig)
+
+            output[name_for_save] = [
+                sta,
+                sfc,
+                sta_rsc,
+                sfc_rsc,
+                t,
+                f,
+                mean_phase,
+                phase_count,
+                spike_phase_vect,
+                mean_phase2,
+                phase_count2,
+                spike_phase_vect2,
+            ]
             unit.underlying.reset_results()
 
     return output
