@@ -17,6 +17,7 @@ def t_maze_dict():
 
     td = {}
 
+    # Lesion
     td["LSR5_t1"] = {
         "t_maze_dir": r"D:\SubRet_recordings_imaging\LSubRet5\recording\plus maze\29112017_t1",
         "base_dir": r"D:\SubRet_recordings_imaging",
@@ -25,6 +26,29 @@ def t_maze_dict():
         ),
         "animal": "LSubRet5",
         "date": "29112017",
+        "session_no": 1,
+    }
+
+    # Control
+    td["CSR1_t1"] = {
+        "t_maze_dir": r"D:\SubRet_recordings_imaging\CSubRet1\CSubRet1_recording\+maze\04092017_first trial",
+        "base_dir": r"D:\SubRet_recordings_imaging",
+        "mapping_location": os.path.join(
+            here, "..", "recording_mappings", "CL-SR_1-3-no-cells.py"
+        ),
+        "animal": "CSubRet1",
+        "date": "4092017",
+        "session_no": 1,
+    }
+
+    td["CSR2_t1"] = {
+        "t_maze_dir": r"D:\SubRet_recordings_imaging\CSubRet2_sham\CSubRet2_recording\+maze\04092017_first trial",
+        "base_dir": r"D:\SubRet_recordings_imaging",
+        "mapping_location": os.path.join(
+            here, "..", "recording_mappings", "CL-SR_1-3-no-cells.py"
+        ),
+        "animal": "CSubRet2",
+        "date": "4092017",
         "session_no": 1,
     }
 
@@ -38,6 +62,7 @@ def t_maze_dict():
         "date": "29112017",
         "session_no": 1,
     }
+
 
     return td
 
