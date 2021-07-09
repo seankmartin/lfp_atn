@@ -52,29 +52,61 @@ def plot_pos_over_time(x, y, rate=2, save=False):
     (scatter,) = ax.plot([], [], "ko")
     time_text = ax.text(0.02, 0.95, "", transform=ax.transAxes)
     frame_time = 0
+    n_pressed = 0
+    do_skip = False
+    n_quit = []
     saved_times = []
+
+    print(
+        "Press space to save time, d to delete last time, q to quit, c to exit program"
+    )
 
     def init():
         global frame_time
+        global n_pressed
+        global do_skip
+        global n_quit
         frame_time = 0
+        n_pressed = 0
+        do_skip = False
+        n_quit = []
         ax.set_xlim(0, max(x) + 1)
         ax.set_ylim(max(y) + 1, 0)
         time_text.set_text("")
         return scatter, time_text
 
     def update(frame):
-        scatter.set_data(x[0:frame], y[0:frame])
         global frame_time
+        global do_skip
+        if do_skip:
+            # skip 30 seconds ahead
+            frame += 27 * 50
+        scatter.set_data(x[0:frame], y[0:frame])
         # 50 is the sampling rate
-        frame_time = frame / 50 
+        frame_time = frame / 50
         time_text.set_text(f"time = {frame_time}")
         return scatter, time_text
 
     def on_keyboard(event):
         global frame_time
+        global n_pressed
+        global do_skip
         if event.key == " ":
-            print(frame_time)
-            saved_times.append(frame_time)
+            t_save = frame_time - 0.2
+            print("Saving {:.2f}".format(t_save))
+            saved_times.append(t_save)
+            n_pressed += 1
+            if n_pressed == 3:
+                do_skip = True
+        if event.key == "d":
+            if len(saved_times) > 0:
+                ft = saved_times.pop()
+                print(f"Deleting {ft}")
+                n_pressed -= 1
+        if event.key == "c":
+            print("Quitting program")
+            n_quit.append("False")
+            plt.close()
 
     num_samples = int(len(x) // rate)
     interval = int(20 // rate)
@@ -91,10 +123,13 @@ def plot_pos_over_time(x, y, rate=2, save=False):
         ani.save("animated.mp4", writer)
 
     else:
-        plt.gcf().canvas.mpl_connect('key_press_event', on_keyboard)
+        plt.gcf().canvas.mpl_connect("key_press_event", on_keyboard)
         plt.show()
 
-    return saved_times
+    if len(n_quit) == 0:
+        return saved_times
+    else:
+        return "QUIT"
 
 
 if __name__ == "__main__":

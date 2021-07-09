@@ -36,6 +36,8 @@ def main(excel_location, base_dir):
     delta_max = cfg["delta_max"]
     theta_min = cfg["theta_min"]
     theta_max = cfg["theta_max"]
+    clean_method = cfg["clean_method"]
+    clean_kwargs = cfg["clean_kwargs"]
     window_sec = 1
     fmin, fmax = 1, 40
 
@@ -60,8 +62,7 @@ def main(excel_location, base_dir):
             param_file=param_file, base_file=recording_location
         )
         spatial = recording.spatial.underlying
-        lfp_clean = LFPClean(method="pick", visualise=False)
-        clean_kwargs = cfg["clean_kwargs"]
+        lfp_clean = LFPClean(method=clean_method, visualise=False)
         sig_dict = lfp_clean.clean(
             recording, min_f=fmin, max_f=fmax, method_kwargs=clean_kwargs
         )["signals"]
@@ -100,7 +101,9 @@ def main(excel_location, base_dir):
                 c = "r"
 
             ax.plot(x_time, y_time, c=c, label=r.test)
-            ax.plot(spat_c[0], spat_c[1], c="b", marker="x")
+            ax.plot(spat_c[0], spat_c[1], c="b", marker="x", label="decision")
+            ax.plot(x_time[0], y_time[0], c="b", marker="o", label="start")
+            ax.plot(x_time[-1], y_time[-1], c="b", marker=".", label="end")
 
             res_dict = {}
             for region, signal in sig_dict.items():

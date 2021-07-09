@@ -1,6 +1,8 @@
+# See the __main__ for parameters
 import os
 import shutil
 from site import addsitedir
+import argparse
 
 import simuran
 import pandas as pd
@@ -11,10 +13,39 @@ addsitedir(lib_folder)
 from lib.plots import plot_pos_over_time
 
 
+def t_maze_dict():
+
+    td = {}
+
+    td["LSR5_t1"] = {
+        "t_maze_dir": r"D:\SubRet_recordings_imaging\LSubRet5\recording\plus maze\29112017_t1",
+        "base_dir": r"D:\SubRet_recordings_imaging",
+        "mapping_location": os.path.join(
+            here, "..", "recording_mappings", "CL-SR_4-6-no-cells.py"
+        ),
+        "animal": "LSubRet5",
+        "date": "29112017",
+        "session_no": 1,
+    }
+
+    td["CSR5_t1"] = {
+        "t_maze_dir": r"D:\SubRet_recordings_imaging\CSubRet5_sham\recording\+ maze\29112017_t1",
+        "base_dir": r"D:\SubRet_recordings_imaging",
+        "mapping_location": os.path.join(
+            here, "..", "recording_mappings", "CL-SR_4-6-no-cells.py"
+        ),
+        "animal": "CSubRet5",
+        "date": "29112017",
+        "session_no": 1,
+    }
+
+    return td
+
+
 def analyse_recording(recording):
 
     spatial = recording.spatial.underlying
-    times = plot_pos_over_time(spatial.get_pos_x(), spatial.get_pos_y(), rate=2)
+    times = plot_pos_over_time(spatial.get_pos_x(), spatial.get_pos_y(), rate=1.5)
     return times
 
 
@@ -82,17 +113,16 @@ def main(
             param_file=mapping_file, base_file=set_file_location
         )
         if main_file_name not in df["location"].values:
-            inp = input(f"Analyse {set_file_location}? (y/n) ")
-            if inp == "n":
-                break
+            print(f"Analysing {set_file_location}")
             trial_number = int(folder[-1])
-            
+
             passed_bit = matching_rat_date[
-                (matching_rat_date["SesNo"] == session_no) &
-                (matching_rat_date["TrialNo"] == trial_number)]
+                (matching_rat_date["SesNo"] == session_no)
+                & (matching_rat_date["TrialNo"] == trial_number)
+            ]
             if len(passed_bit) == 1:
                 passed = passed_bit["pass/fail"].values.flatten()[0]
-                print(passed)
+                print(f"The rat passed (Y) or failed (N)? {passed}")
             else:
                 print("WARNING unable to get pass/fail for this trial")
                 print("Please set manually after, currently FAILED_TO_FIND")
@@ -100,6 +130,10 @@ def main(
             done = False
             while not done:
                 times = analyse_recording(recording)
+                if times == "QUIT":
+                    print("Saving results to {}".format(xls_location))
+                    process_list_to_df(df, data_list, columns, xls_location)
+                    return
                 if len(times) != 6:
                     print("Incorrect number of times, retrying")
                     print("Times should be (start, choice_made, end) for two trials")
@@ -115,7 +149,7 @@ def main(
                 animal,
                 date,
                 "first",
-                passed,
+                passed.strip().upper(),
                 os.path.basename(mapping_file),
             ]
             data_list.append(data)
@@ -129,7 +163,7 @@ def main(
                 animal,
                 date,
                 "second",
-                passed,
+                passed.strip().upper(),
                 os.path.basename(mapping_file),
             ]
             data_list.append(data)
@@ -145,34 +179,46 @@ def process_list_to_df(orig_df, list_, columns, out_name):
         split = os.path.splitext(out_name)
         new_name = split[0] + "__copy" + split[1]
         shutil.copy(out_name, new_name)
-    df.to_excel(out_name, index=False)
+
+    try:
+        df.to_excel(out_name, index=False)
+    except PermissionError as e:
+        print(f"Please close {out_name}.")
+        inp = input("When closed, press y to continue\n")
+        if inp.lower().strip() == "y":
+            df.to_excel(out_name, index=False)
 
 
 if __name__ == "__main__":
-    main_t_maze_dir = (
-        r"D:\SubRet_recordings_imaging\LSubRet5\recording\plus maze\29112017_t1"
-    )
+    # Mark (start, decision_point, end) using space
     here = os.path.dirname(os.path.abspath(__file__))
+
+    parser = argparse.ArgumentParser(description="t-maze cli")
+    parser.add_argument("trial_id", type=str, help="trial id as animal_tX")
+    parsed = parser.parse_args()
+    name_to_get = parsed.trial_id
+
+    td = t_maze_dict()
+    to_analyse = td[name_to_get]
+    main_t_maze_dir = to_analyse["t_maze_dir"]
+    main_base_dir = to_analyse["base_dir"]
+    main_mapping_location = to_analyse["mapping_location"]
+    main_animal = to_analyse["animal"]
+    main_date = to_analyse["date"]
+    main_session_no = to_analyse["session_no"]
+
+    # Determined locations for loading and saving
     main_output_location = os.path.join(here, "results")
     os.makedirs(main_output_location, exist_ok=True)
-
-    base_dir = r"D:\SubRet_recordings_imaging"
     xls_location = os.path.join(main_output_location, "tmaze-times.xlsx")
-
-    mapping_location = os.path.join(
-        here, "..", "recording_mappings", "CL-SR_4-6-no-cells.py"
-    )
-    animal = "LSubRet5"
-    date = "29112017"
-    session_no = 1
 
     main(
         main_t_maze_dir,
         main_output_location,
-        base_dir,
-        mapping_location,
+        main_base_dir,
+        main_mapping_location,
         xls_location,
-        animal=animal,
-        date=date,
-        session_no=session_no,
+        animal=main_animal,
+        date=main_date,
+        session_no=main_session_no,
     )
