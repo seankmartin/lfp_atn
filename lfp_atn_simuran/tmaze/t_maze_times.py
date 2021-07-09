@@ -18,6 +18,51 @@ def t_maze_dict():
     td = {}
 
     # Lesion
+    td["LSR1_t1"] = {
+        "t_maze_dir": r"D:\SubRet_recordings_imaging\LSubRet1\recording\+maze\04092017_first trial",
+        "base_dir": r"D:\SubRet_recordings_imaging",
+        "mapping_location": os.path.join(
+            here, "..", "recording_mappings", "CL-SR_1-3-no-cells.py"
+        ),
+        "animal": "LSubRet1",
+        "date": "4092017",
+        "session_no": 1,
+    }
+
+    # LSR2 is damaged
+    # td["LSR2_t1"] = {
+    #     "t_maze_dir": r"D:\SubRet_recordings_imaging\LSubRet2\recording\+maze\04092017_first trial",
+    #     "base_dir": r"D:\SubRet_recordings_imaging",
+    #     "mapping_location": os.path.join(
+    #         here, "..", "recording_mappings", "CL-SR_1-3-no-cells.py"
+    #     ),
+    #     "animal": "LSubRet2",
+    #     "date": "4092017",
+    #     "session_no": 1,
+    # }
+
+    td["LSR3_t1"] = {
+        "t_maze_dir": r"D:\SubRet_recordings_imaging\LSubRet3\recording\+maze\04092017_1st trial",
+        "base_dir": r"D:\SubRet_recordings_imaging",
+        "mapping_location": os.path.join(
+            here, "..", "recording_mappings", "CL-SR_1-3-no-cells.py"
+        ),
+        "animal": "LSubRet3",
+        "date": "4092017",
+        "session_no": 1,
+    }
+
+    td["LSR4_t1"] = {
+        "t_maze_dir": r"D:\SubRet_recordings_imaging\LSubRet4\recording\+maze\29112017_t1",
+        "base_dir": r"D:\SubRet_recordings_imaging",
+        "mapping_location": os.path.join(
+            here, "..", "recording_mappings", "CL-SR_4-6-no-cells.py"
+        ),
+        "animal": "LSubRet4",
+        "date": "29112017",
+        "session_no": 1,
+    }
+
     td["LSR5_t1"] = {
         "t_maze_dir": r"D:\SubRet_recordings_imaging\LSubRet5\recording\plus maze\29112017_t1",
         "base_dir": r"D:\SubRet_recordings_imaging",
@@ -52,6 +97,28 @@ def t_maze_dict():
         "session_no": 1,
     }
 
+    td["CSR3_t1"] = {
+        "t_maze_dir": r"D:\SubRet_recordings_imaging\CSubRet3_sham\recording\+maze\04092017_first trial",
+        "base_dir": r"D:\SubRet_recordings_imaging",
+        "mapping_location": os.path.join(
+            here, "..", "recording_mappings", "CL-SR_1-3-no-cells.py"
+        ),
+        "animal": "CSubRet3",
+        "date": "4092017",
+        "session_no": 1,
+    }
+
+    td["CSR4_t1"] = {
+        "t_maze_dir": r"D:\SubRet_recordings_imaging\CSubRet4\recording\+maze\29112017_t1",
+        "base_dir": r"D:\SubRet_recordings_imaging",
+        "mapping_location": os.path.join(
+            here, "..", "recording_mappings", "CL-SR_4-6-no-cells.py"
+        ),
+        "animal": "CSubRet4",
+        "date": "29112017",
+        "session_no": 1,
+    }
+
     td["CSR5_t1"] = {
         "t_maze_dir": r"D:\SubRet_recordings_imaging\CSubRet5_sham\recording\+ maze\29112017_t1",
         "base_dir": r"D:\SubRet_recordings_imaging",
@@ -60,6 +127,17 @@ def t_maze_dict():
         ),
         "animal": "CSubRet5",
         "date": "29112017",
+        "session_no": 1,
+    }
+
+    td["CSR6_t1"] = {
+        "t_maze_dir": r"D:\SubRet_recordings_imaging\CSR6\+ maze\22032018_t1",
+        "base_dir": r"D:\SubRet_recordings_imaging",
+        "mapping_location": os.path.join(
+            here, "..", "recording_mappings", "CL-SR_4-6-no-cells.py"
+        ),
+        "animal": "CSubRet6",
+        "date": "22032018",
         "session_no": 1,
     }
 

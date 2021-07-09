@@ -12,3 +12,4 @@ tests/*.png
 tests/*.csv
 *sim_results*
 lfp_atn_simuran/examples/results/
+lfp_atn_simuran/tmaze/results/

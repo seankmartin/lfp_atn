@@ -77,7 +77,7 @@ def main(excel_location, base_dir):
         f = f[np.nonzero((f >= fmin) & (f <= fmax))]
         Cxy = Cxy[np.nonzero((f >= fmin) & (f <= fmax))]
 
-        theta_co = (Cxy[np.nonzero((f >= theta_min) & (f <= theta_max))])
+        theta_co = Cxy[np.nonzero((f >= theta_min) & (f <= theta_max))]
         delta_co = Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
         max_theta_coherence_ = np.amax(theta_co)
         max_delta_coherence_ = np.amax(delta_co)
@@ -90,10 +90,10 @@ def main(excel_location, base_dir):
             t3 = r.end
             lfpt1, lfpt2 = int(floor(t1 * 250)), int(ceil(t2 * 250))
             if (lfpt2 - lfpt1) > (max_len * 250):
-                lfpt2 = (lfpt1 + (max_len * 250))
+                lfpt2 = lfpt1 + (max_len * 250)
             # Make sure have at least 1 second
             if (lfpt2 - lfpt1) < 250:
-                lfpt2 = (lfpt1 + 250)
+                lfpt2 = lfpt1 + 250
 
             st1, st2 = int(floor(t1 * 50)), int(ceil(t3 * 50))
             x_time = spatial.get_pos_x()[st1:st2]
@@ -145,7 +145,7 @@ def main(excel_location, base_dir):
             f = f[np.nonzero((f >= fmin) & (f <= fmax))]
             Cxy = Cxy[np.nonzero((f >= fmin) & (f <= fmax))]
 
-            theta_co = (Cxy[np.nonzero((f >= theta_min) & (f <= theta_max))])
+            theta_co = Cxy[np.nonzero((f >= theta_min) & (f <= theta_max))]
             delta_co = Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
             max_theta_coherence = np.amax(theta_co)
             max_delta_coherence = np.amax(delta_co)
@@ -170,7 +170,9 @@ def main(excel_location, base_dir):
                     "Control" if r.animal.lower().startswith("c") else "Lesion (ATNx)"
                 )
                 for f_, cxy_ in zip(f, Cxy):
-                    coherence_df_list.append((f_, cxy_, r.passed, group, r.test))
+                    coherence_df_list.append(
+                        (f_, cxy_, r.passed, group, r.test, r.session)
+                    )
 
         ax.invert_yaxis()
         ax.legend()
@@ -201,7 +203,7 @@ def main(excel_location, base_dir):
     df.to_excel(out_name, index=False)
 
     if no_pass is False:
-        headers = ["Frequency (Hz)", "Coherence", "Choice", "Group", "Test"]
+        headers = ["Frequency (Hz)", "Coherence", "Choice", "Group", "Test", "Session"]
         df = list_to_df(coherence_df_list, headers=headers)
 
         df = df[df["Test"] == "second"]
