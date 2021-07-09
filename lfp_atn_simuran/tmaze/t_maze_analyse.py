@@ -1,6 +1,7 @@
 import os
 from site import addsitedir
 from math import floor, ceil
+from pprint import pprint
 
 import simuran
 import pandas as pd
@@ -11,6 +12,7 @@ import numpy as np
 from scipy.signal import coherence
 from skm_pyutils.py_table import list_to_df
 import seaborn as sns
+import mne
 
 try:
     from lfp_atn_simuran.analysis.lfp_clean import LFPClean
@@ -21,6 +23,8 @@ try:
     do_analysis = True
 except ImportError:
     do_analysis = False
+
+from neuronal.decoding import LFPDecoder
 
 lib_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 addsitedir(lib_folder)
@@ -54,6 +58,7 @@ def main(excel_location, base_dir):
 
     results = []
     coherence_df_list = []
+    new_lfp = np.zeros(shape=(num_rows // 2, 2, 500))
     for j in range(num_rows // 2):
         row1 = next(ituples)
         row2 = next(ituples)
@@ -83,7 +88,7 @@ def main(excel_location, base_dir):
         max_delta_coherence_ = np.amax(delta_co)
 
         fig, ax = plt.subplots()
-        for r in (row1, row2):
+        for k_, r in enumerate((row1, row2)):
             # end or choice could be used
             # t1, t2 = r.start, r.end
             t1, t2 = r.start, r.choice
@@ -139,6 +144,9 @@ def main(excel_location, base_dir):
 
             x = np.array(sig_dict["SUB"].samples[lfpt1:lfpt2].to(u.mV))
             y = np.array(sig_dict["RSC"].samples[lfpt1:lfpt2].to(u.mV))
+
+            new_lfp[j, 0, k_ * 250 : (k_ + 1) * 250] = x[:250]
+            new_lfp[j, 0, k_ * 250 : (k_ + 1) * 250] = y[:250]
             fs = sig_dict["SUB"].sampling_rate
 
             f, Cxy = coherence(x, y, fs, nperseg=window_sec * 250)
@@ -212,6 +220,39 @@ def main(excel_location, base_dir):
             data=df, x="Frequency (Hz)", y="Coherence", hue="Group", style="Choice"
         )
         plt.savefig(os.path.join(os.path.dirname(excel_location), "coherence"))
+
+        do_decoding = True
+        if do_decoding:
+            # TODO split into control and lesion
+            sfreq = 250
+            ch_types = ["eeg", "eeg"]
+            ch_names = ["SUB", "RSC"]
+            info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=ch_types)
+            mne_epochs = mne.EpochsArray(new_lfp, info)
+            labels = df["Choice"]
+
+            decoder = LFPDecoder(
+                mne_epochs=mne_epochs,
+                labels=labels,
+                cv_params={"n_splits": 100},
+                feature_params={"step": 10}
+            )
+            # TODO Problem with CV here, inconsistent number of samples 80 and 800.
+            out = decoder.decode()
+
+            print(decoder.decoding_accuracy(out[2], out[1]))
+
+            print("\n----------Cross Validation-------------")
+
+            decoder.cross_val_decode(shuffle=True)
+            pprint(decoder.cross_val_result)
+            pprint(decoder.confidence_interval_estimate("accuracy"))
+
+            random_search = decoder.hyper_param_search(verbose=True, set_params=False)
+            print("Best params:", random_search.best_params_)
+
+            base_dir_new = os.path.dirname(excel_location)
+            decoder.visualise_features(output_folder=base_dir_new)
 
 
 if __name__ == "__main__":
