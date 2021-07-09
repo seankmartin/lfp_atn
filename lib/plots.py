@@ -110,7 +110,7 @@ def plot_pos_over_time(x, y, rate=2, save=False):
         if event.key == "d":
             if len(saved_times) > 0:
                 ft = saved_times.pop()
-                print(f"Deleting {ft}")
+                print("Deleting {:.2f}".format(ft))
                 n_pressed -= 1
         if event.key == "c":
             print("Quitting program")

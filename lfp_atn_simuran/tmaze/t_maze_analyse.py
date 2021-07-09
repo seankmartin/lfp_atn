@@ -38,8 +38,11 @@ def main(excel_location, base_dir):
     theta_max = cfg["theta_max"]
     clean_method = cfg["clean_method"]
     clean_kwargs = cfg["clean_kwargs"]
-    window_sec = 1
-    fmin, fmax = 1, 40
+    window_sec = 0.5
+    fmin, fmax = 1, 20
+
+    # Don't analyse more than 6 seconds
+    max_len = 6
 
     ituples = df.itertuples()
     num_rows = len(df)
@@ -70,16 +73,14 @@ def main(excel_location, base_dir):
         x = np.array(sig_dict["SUB"].samples.to(u.mV))
         y = np.array(sig_dict["RSC"].samples.to(u.mV))
         fs = sig_dict["SUB"].sampling_rate
-        f, Cxy = coherence(x, y, fs, nperseg=2 * fmax)
+        f, Cxy = coherence(x, y, fs, nperseg=window_sec * 250)
         f = f[np.nonzero((f >= fmin) & (f <= fmax))]
         Cxy = Cxy[np.nonzero((f >= fmin) & (f <= fmax))]
 
-        max_theta_coherence_ = max(
-            Cxy[np.nonzero((f >= theta_min) & (f <= theta_max))]
-        )
-        max_delta_coherence_ = max(
-            Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
-        )
+        theta_co = (Cxy[np.nonzero((f >= theta_min) & (f <= theta_max))])
+        delta_co = Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
+        max_theta_coherence_ = np.amax(theta_co)
+        max_delta_coherence_ = np.amax(delta_co)
 
         fig, ax = plt.subplots()
         for r in (row1, row2):
@@ -88,6 +89,11 @@ def main(excel_location, base_dir):
             t1, t2 = r.start, r.choice
             t3 = r.end
             lfpt1, lfpt2 = int(floor(t1 * 250)), int(ceil(t2 * 250))
+            if (lfpt2 - lfpt1) > (max_len * 250):
+                lfpt2 = (lfpt1 + (max_len * 250))
+            # Make sure have at least 1 second
+            if (lfpt2 - lfpt1) < 250:
+                lfpt2 = (lfpt1 + 250)
 
             st1, st2 = int(floor(t1 * 50)), int(ceil(t3 * 50))
             x_time = spatial.get_pos_x()[st1:st2]
@@ -135,16 +141,14 @@ def main(excel_location, base_dir):
             y = np.array(sig_dict["RSC"].samples[lfpt1:lfpt2].to(u.mV))
             fs = sig_dict["SUB"].sampling_rate
 
-            f, Cxy = coherence(x, y, fs, nperseg=2 * fmax)
+            f, Cxy = coherence(x, y, fs, nperseg=window_sec * 250)
             f = f[np.nonzero((f >= fmin) & (f <= fmax))]
             Cxy = Cxy[np.nonzero((f >= fmin) & (f <= fmax))]
 
-            max_theta_coherence = max(
-                Cxy[np.nonzero((f >= theta_min) & (f <= theta_max))]
-            )
-            max_delta_coherence = max(
-                Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
-            )
+            theta_co = (Cxy[np.nonzero((f >= theta_min) & (f <= theta_max))])
+            delta_co = Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
+            max_theta_coherence = np.amax(theta_co)
+            max_delta_coherence = np.amax(delta_co)
 
             fig2, ax2 = plt.subplots(3, 1)
             ax2[0].plot(f, Cxy, c="k")
@@ -166,7 +170,7 @@ def main(excel_location, base_dir):
                     "Control" if r.animal.lower().startswith("c") else "Lesion (ATNx)"
                 )
                 for f_, cxy_ in zip(f, Cxy):
-                    coherence_df_list.append((f_, cxy_, r.passed, group))
+                    coherence_df_list.append((f_, cxy_, r.passed, group, r.test))
 
         ax.invert_yaxis()
         ax.legend()
@@ -197,8 +201,10 @@ def main(excel_location, base_dir):
     df.to_excel(out_name, index=False)
 
     if no_pass is False:
-        headers = ["Frequency (Hz)", "Coherence", "Choice", "Group"]
+        headers = ["Frequency (Hz)", "Coherence", "Choice", "Group", "Test"]
         df = list_to_df(coherence_df_list, headers=headers)
+
+        df = df[df["Test"] == "second"]
 
         sns.lineplot(
             data=df, x="Frequency (Hz)", y="Coherence", hue="Group", style="Choice"
