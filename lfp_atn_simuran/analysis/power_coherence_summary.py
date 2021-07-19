@@ -1,4 +1,4 @@
-def do_fig(info, extra_info):
+def do_coherence(info, extra_info):
     data, fnames = info
     out_dir, name = extra_info
     plot_all_lfp(data, out_dir, name)

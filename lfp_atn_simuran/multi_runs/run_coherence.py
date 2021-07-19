@@ -61,9 +61,9 @@ def set_fixed_params(in_dict):
 
     # Can set a function to run after all analysis here
     # For example, it could plot a summary of all the data
-    from lfp_atn_simuran.analysis.do_wt_figure import do_fig
+    from lfp_atn_simuran.analysis.power_coherence_summary import do_coherence
 
-    in_dict["after_batch_fn"] = do_fig
+    in_dict["after_batch_fn"] = do_coherence
 
     # If the after batch function needs the full dataset
     # Pass this as true
