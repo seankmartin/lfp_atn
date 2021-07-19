@@ -33,7 +33,9 @@ from lib.plots import plot_pos_over_time
 here = os.path.dirname(os.path.abspath(__file__))
 
 
-def main(excel_location, base_dir):
+def main(excel_location, base_dir, plot_individual_sessions):
+
+    # Setup
     df = pd.read_excel(excel_location)
     cfg = parse_cfg_info()
     delta_min = cfg["delta_min"]
@@ -59,6 +61,9 @@ def main(excel_location, base_dir):
     results = []
     coherence_df_list = []
     new_lfp = np.zeros(shape=(num_rows // 2, 2, 500))
+
+    ## Extract LFP, do coherence, and plot
+    ## TODO implement no plotting for faster speed
     for j in range(num_rows // 2):
         row1 = next(ituples)
         row2 = next(ituples)
@@ -86,8 +91,12 @@ def main(excel_location, base_dir):
         delta_co = Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
         max_theta_coherence_ = np.amax(theta_co)
         max_delta_coherence_ = np.amax(delta_co)
+        
+        if plot_individual_sessions:
+            fig, ax = plt.subplots()
 
-        fig, ax = plt.subplots()
+        # Loop over the two parts of a trial
+        # TODO decide if this should just be for the final part of the trial
         for k_, r in enumerate((row1, row2)):
             # end or choice could be used
             # t1, t2 = r.start, r.end
@@ -106,17 +115,19 @@ def main(excel_location, base_dir):
             c_end = int(floor(t2 * 50))
             spat_c = (spatial.get_pos_x()[c_end], spatial.get_pos_y()[c_end])
 
-            if r.test == "first":
-                c = "k"
-            else:
-                c = "r"
+            if plot_individual_sessions:
+                if r.test == "first":
+                    c = "k"
+                else:
+                    c = "r"
 
-            ax.plot(x_time, y_time, c=c, label=r.test)
-            ax.plot(spat_c[0], spat_c[1], c="b", marker="x", label="decision")
-            ax.plot(x_time[0], y_time[0], c="b", marker="o", label="start")
-            ax.plot(x_time[-1], y_time[-1], c="b", marker=".", label="end")
+                ax.plot(x_time, y_time, c=c, label=r.test)
+                ax.plot(spat_c[0], spat_c[1], c="b", marker="x", label="decision")
+                ax.plot(x_time[0], y_time[0], c="b", marker="o", label="start")
+                ax.plot(x_time[-1], y_time[-1], c="b", marker=".", label="end")
 
             res_dict = {}
+            # Power
             for region, signal in sig_dict.items():
                 lfp = NLfp()
                 lfp.set_channel_id(signal.channel)
@@ -132,7 +143,7 @@ def main(excel_location, base_dir):
                 res_dict["{}_delta".format(region)] = delta_power["relative_power"]
                 res_dict["{}_theta".format(region)] = theta_power["relative_power"]
 
-            res_list = [r.location, r.session, r.animal, r.test]
+            res_list = [r.location, r.session, r.animal, r.test, r.passed]
             res_list += [
                 res_dict["SUB_delta"],
                 res_dict["SUB_theta"],
@@ -140,13 +151,15 @@ def main(excel_location, base_dir):
                 res_dict["RSC_theta"],
             ]
             results.append(res_list)
+
+            # Coherence
             name = os.path.splitext(r.location)[0]
 
-            x = np.array(sig_dict["SUB"].samples[lfpt1:lfpt2].to(u.mV))
-            y = np.array(sig_dict["RSC"].samples[lfpt1:lfpt2].to(u.mV))
+            sub_s = sig_dict["SUB"]
+            rsc_s = sig_dict["RSC"]
+            x = np.array(sub_s.samples[lfpt1:lfpt2].to(u.mV))
+            y = np.array(rsc_s.samples[lfpt1:lfpt2].to(u.mV))
 
-            new_lfp[j, 0, k_ * 250 : (k_ + 1) * 250] = x[:250]
-            new_lfp[j, 0, k_ * 250 : (k_ + 1) * 250] = y[:250]
             fs = sig_dict["SUB"].sampling_rate
 
             f, Cxy = coherence(x, y, fs, nperseg=window_sec * 250)
@@ -158,18 +171,19 @@ def main(excel_location, base_dir):
             max_theta_coherence = np.amax(theta_co)
             max_delta_coherence = np.amax(delta_co)
 
-            fig2, ax2 = plt.subplots(3, 1)
-            ax2[0].plot(f, Cxy, c="k")
-            ax2[1].plot([i / 250 for i in range(len(x))], x, c="k")
-            ax2[2].plot([i / 250 for i in range(len(y))], y, c="k")
-            base_dir_new = os.path.dirname(excel_location)
-            fig2.savefig(
-                os.path.join(
-                    base_dir_new,
-                    "coherence_{}_{}_{}.png".format(row1.location, r.session, r.test),
+            if plot_individual_sessions:
+                fig2, ax2 = plt.subplots(3, 1)
+                ax2[0].plot(f, Cxy, c="k")
+                ax2[1].plot([i / 250 for i in range(len(x))], x, c="k")
+                ax2[2].plot([i / 250 for i in range(len(y))], y, c="k")
+                base_dir_new = os.path.dirname(excel_location)
+                fig2.savefig(
+                    os.path.join(
+                        base_dir_new,
+                        "coherence_{}_{}_{}.png".format(row1.location, r.session, r.test),
+                    )
                 )
-            )
-            plt.close(fig2)
+                plt.close(fig2)
             res_list += [max_theta_coherence, max_delta_coherence]
             res_list += [max_theta_coherence_, max_delta_coherence_]
 
@@ -181,19 +195,31 @@ def main(excel_location, base_dir):
                     coherence_df_list.append(
                         (f_, cxy_, r.passed, group, r.test, r.session)
                     )
+            
+            # For decoding
+            sub_s = sig_dict["SUB"].filter(theta_min, theta_max)
+            rsc_s = sig_dict["RSC"].filter(theta_min, theta_max)
+            x = np.array(sub_s.samples[lfpt1:lfpt2].to(u.mV))
+            y = np.array(rsc_s.samples[lfpt1:lfpt2].to(u.mV))
 
-        ax.invert_yaxis()
-        ax.legend()
-        base_dir_new = os.path.dirname(excel_location)
-        figname = os.path.join(base_dir_new, name) + "_tmaze.png"
-        fig.savefig(figname, dpi=400)
-        plt.close(fig)
+            new_lfp[j, 0, k_ * 250 : (k_ + 1) * 250] = np.abs(x[-250:])
+            new_lfp[j, 0, k_ * 250 : (k_ + 1) * 250] = np.abs(y[-250:])
 
+        if plot_individual_sessions:
+            ax.invert_yaxis()
+            ax.legend()
+            base_dir_new = os.path.dirname(excel_location)
+            figname = os.path.join(base_dir_new, name) + "_tmaze.png"
+            fig.savefig(figname, dpi=400)
+            plt.close(fig)
+
+    # Save the results
     headers = [
         "location",
         "session",
         "animal",
         "test",
+        "choice",
         "SUB_delta",
         "SUB_theta",
         "RSC_delta",
@@ -204,62 +230,66 @@ def main(excel_location, base_dir):
         "Full_delta_coherence",
     ]
 
-    df = pd.DataFrame(results, columns=headers)
+    res_df = pd.DataFrame(results, columns=headers)
 
     split = os.path.splitext(excel_location)
     out_name = split[0] + "_results" + split[1]
-    df.to_excel(out_name, index=False)
+    res_df.to_excel(out_name, index=False)
 
-    if no_pass is False:
-        headers = ["Frequency (Hz)", "Coherence", "Choice", "Group", "Test", "Session"]
-        df = list_to_df(coherence_df_list, headers=headers)
+    # Plot difference between pass and fail trials
+    headers = ["Frequency (Hz)", "Coherence", "Choice", "Group", "Test", "Session"]
+    df = list_to_df(coherence_df_list, headers=headers)
 
-        df = df[df["Test"] == "second"]
+    df = df[df["Test"] == "second"]
 
-        sns.lineplot(
-            data=df, x="Frequency (Hz)", y="Coherence", hue="Group", style="Choice"
+    sns.lineplot(
+        data=df, x="Frequency (Hz)", y="Coherence", hue="Group", style="Choice"
+    )
+    plt.savefig(os.path.join(os.path.dirname(excel_location), "coherence"))
+
+    do_decoding = True
+
+    # Try to decode pass and fail trials.
+    # TODO split into control and lesion
+    if do_decoding:
+        sfreq = 250
+        ch_types = ["eeg", "eeg"]
+        ch_names = ["SUB", "RSC"]
+
+        info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=ch_types)
+        mne_epochs = mne.EpochsArray(new_lfp, info)
+        labels = res_df[res_df["test"] == "second"]["choice"].to_numpy()
+
+        decoder = LFPDecoder(
+            labels=labels,
+            mne_epochs=mne_epochs,
+            cv_params={"n_splits": 100},
+            feature_params={"step": 25}
         )
-        plt.savefig(os.path.join(os.path.dirname(excel_location), "coherence"))
+        out = decoder.decode()
 
-        do_decoding = True
-        if do_decoding:
-            # TODO split into control and lesion
-            sfreq = 250
-            ch_types = ["eeg", "eeg"]
-            ch_names = ["SUB", "RSC"]
-            info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=ch_types)
-            mne_epochs = mne.EpochsArray(new_lfp, info)
-            labels = df["Choice"]
+        print(decoder.decoding_accuracy(out[2], out[1]))
 
-            decoder = LFPDecoder(
-                mne_epochs=mne_epochs,
-                labels=labels,
-                cv_params={"n_splits": 100},
-                feature_params={"step": 10}
-            )
-            # TODO Problem with CV here, inconsistent number of samples 80 and 800.
-            out = decoder.decode()
+        print("\n----------Cross Validation-------------")
 
-            print(decoder.decoding_accuracy(out[2], out[1]))
+        decoder.cross_val_decode(shuffle=True)
+        pprint(decoder.cross_val_result)
+        pprint(decoder.confidence_interval_estimate("accuracy"))
 
-            print("\n----------Cross Validation-------------")
+        random_search = decoder.hyper_param_search(verbose=True, set_params=False)
+        print("Best params:", random_search.best_params_)
 
-            decoder.cross_val_decode(shuffle=True)
-            pprint(decoder.cross_val_result)
-            pprint(decoder.confidence_interval_estimate("accuracy"))
-
-            random_search = decoder.hyper_param_search(verbose=True, set_params=False)
-            print("Best params:", random_search.best_params_)
-
-            base_dir_new = os.path.dirname(excel_location)
-            decoder.visualise_features(output_folder=base_dir_new)
+        base_dir_new = os.path.dirname(excel_location)
+        decoder.visualise_features(output_folder=base_dir_new)
 
 
 if __name__ == "__main__":
     here = os.path.dirname(os.path.abspath(__file__))
     main_output_location = os.path.join(here, "results")
 
-    base_dir = r"D:\SubRet_recordings_imaging"
-    xls_location = os.path.join(main_output_location, "tmaze-times.xlsx")
+    main_base_dir = r"D:\SubRet_recordings_imaging"
+    main_xls_location = os.path.join(main_output_location, "tmaze-times.xlsx")
 
-    main(xls_location, base_dir)
+    main_plot_individual_sessions = False
+
+    main(main_xls_location, main_base_dir, main_plot_individual_sessions)
