@@ -14,3 +14,4 @@ tests/*.csv
 lfp_atn_simuran/examples/results/
 lfp_atn_simuran/tmaze/results/
 lfp_atn_simuran/cell_lists/PDF_results/
+lfp_atn_simuran/.smt/
