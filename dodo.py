@@ -5,6 +5,7 @@ from simuran.main.doit import create_task
 from skm_pyutils.py_config import read_cfg
 from skm_pyutils.py_path import get_all_files_in_dir
 from doit.tools import title_with_actions
+from doit.task import clean_targets
 
 here = os.path.dirname(os.path.abspath(__file__))
 cfg = read_cfg(os.path.join(here, "dodo.cfg"), verbose=False)
@@ -81,17 +82,11 @@ def task_speed_ibi():
     location = os.path.abspath(os.path.join(base_, "list_spike_ibi.py"))
     action = f"python {location}"
 
-    def clean():
-        for fname_ in targets:
-            if os.path.isfile(fname_):
-                print("Removing file {}".format(fname_))
-                os.remove(fname_)    
-
     return {
         "file_dep": dependencies,
         "targets": targets,
         "actions": [action],
-        "clean": [clean],
+        "clean": [clean_targets],
         "title": title_with_actions,
         "verbosity": 0,
         "doc": action,
@@ -112,17 +107,32 @@ def task_spike_lfp():
     location = os.path.abspath(os.path.join(base_, "list_spike_lfp.py"))
     action = f"python {location}"
 
-    def clean():
-        for fname_ in targets:
-            if os.path.isfile(fname_):
-                print("Removing file {}".format(fname_))
-                os.remove(fname_)    
+    return {
+        "file_dep": dependencies,
+        "targets": targets,
+        "actions": [action],
+        "clean": [clean_targets],
+        "title": title_with_actions,
+        "verbosity": 0,
+        "doc": action,
+    }
+
+def task_tmaze():
+    base_ = os.path.join(here, "lfp_atn_simuran", "tmaze")
+    dependencies = [
+        os.path.join(base_, "results", "tmaze-times.xlsx"),
+        os.path.join(base_, "tmaze_analyse.py"),
+    ]
+    targets = [os.path.join(base_, "results", "tmaze-times_results.xlsx")]
+
+    location = os.path.abspath(os.path.join(base_, "tmaze_analyse.py"))
+    action = f"python {location}"
 
     return {
         "file_dep": dependencies,
         "targets": targets,
         "actions": [action],
-        "clean": [clean],
+        "clean": [clean_targets],
         "title": title_with_actions,
         "verbosity": 0,
         "doc": action,
