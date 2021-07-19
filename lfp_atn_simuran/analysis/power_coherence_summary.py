@@ -25,6 +25,7 @@ def plot_all_spectrum(info, out_dir, name):
     cfg = parse_cfg_info()
 
     scale = cfg["psd_scale"]
+    base_dir = cfg["cfg_base_dir"]
 
     os.makedirs(out_dir, exist_ok=True)
 
@@ -41,7 +42,12 @@ def plot_all_spectrum(info, out_dir, name):
     for item_list, fname_list in zip(data, fnames):
         r_ctrl = 0
         r_les = 0
-        for item_dict, _ in zip(item_list, fname_list):
+        for item_dict, fname in zip(item_list, fname_list):
+            # animal_name = fname[len(base_dir+os.sep):].split(os.sep)[0]
+            # animal_name = animal_name.split("_")[0]
+            # animal_number = int(animal_name[-1])
+            # if animal_number >= 4:
+            #     continue
             item_dict = item_dict["powers"]
             data_set = item_dict["SUB" + " welch"][2][0]
             if data_set == "Control":
@@ -69,7 +75,7 @@ def plot_all_spectrum(info, out_dir, name):
     data = np.array(parsed_info)
     df = pd.DataFrame(data, columns=["frequency", "power", "Group", "region"])
     df.replace("Control", "Control (ATN,   N = 6)", inplace=True)
-    df.replace("Lesion", "Lesion  (ATNx, N = 6)", inplace=True)
+    df.replace("Lesion", "Lesion  (ATNx, N = 5)", inplace=True)
     df[["frequency", "power"]] = df[["frequency", "power"]].apply(pd.to_numeric)
 
     print("Saving plots to {}".format(os.path.join(out_dir, "summary")))
