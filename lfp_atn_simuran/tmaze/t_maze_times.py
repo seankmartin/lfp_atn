@@ -17,6 +17,17 @@ def t_maze_dict():
 
     td = {}
 
+    # The key is used to select the t-maze to analyse 
+    # (e.g LSR1_t1 would select that session)
+    # An entry to analyse needs these keys
+    # 1. t_maze_dir : the directory to the trial
+    # 2. base_dir : base dir of beths data
+    # 3. mapping_location : parameter file of wires to region
+    # -- The next 3 are used to lookup results/maze.xlsx
+    # 4. animal : name of animal (note try to name as in this sheet - )
+    # 5. date : date from sheet
+    # 6. session_no : the session number
+
     # Lesion
     td["LSR1_t1"] = {
         "t_maze_dir": r"D:\SubRet_recordings_imaging\LSubRet1\recording\+maze\04092017_first trial",
@@ -29,17 +40,16 @@ def t_maze_dict():
         "session_no": 1,
     }
 
-    # LSR2 is damaged
-    # td["LSR2_t1"] = {
-    #     "t_maze_dir": r"D:\SubRet_recordings_imaging\LSubRet2\recording\+maze\04092017_first trial",
-    #     "base_dir": r"D:\SubRet_recordings_imaging",
-    #     "mapping_location": os.path.join(
-    #         here, "..", "recording_mappings", "CL-SR_1-3-no-cells.py"
-    #     ),
-    #     "animal": "LSubRet2",
-    #     "date": "4092017",
-    #     "session_no": 1,
-    # }
+    td["LSR1_t2"] = {
+        "t_maze_dir": r"D:\SubRet_recordings_imaging\LSubRet1\recording\+maze\05092017_2nd trial",
+        "base_dir": r"D:\SubRet_recordings_imaging",
+        "mapping_location": os.path.join(
+            here, "..", "recording_mappings", "CL-SR_1-3-no-cells.py"
+        ),
+        "animal": "LSubRet1",
+        "date": "5092017",
+        "session_no": 2,
+    }
 
     td["LSR3_t1"] = {
         "t_maze_dir": r"D:\SubRet_recordings_imaging\LSubRet3\recording\+maze\04092017_1st trial",
@@ -148,7 +158,11 @@ def t_maze_dict():
 def analyse_recording(recording):
 
     spatial = recording.spatial.underlying
-    times = plot_pos_over_time(spatial.get_pos_x(), spatial.get_pos_y(), rate=1.5)
+
+    # NOTE can change the rate here if going too fast or too slow
+    # NOTE skip_rate can be used to skip less time.
+    times = plot_pos_over_time(
+        spatial.get_pos_x(), spatial.get_pos_y(), rate=1.5, skip_rate=27)
     return times
 
 

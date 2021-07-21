@@ -47,7 +47,7 @@ def plot_mne(raw_array, base_name):
     )
 
 
-def plot_pos_over_time(x, y, rate=2, save=False):
+def plot_pos_over_time(x, y, rate=2, skip_rate=27, save=False):
     fig, ax = plt.subplots(figsize=(8, 8))
     (scatter,) = ax.plot([], [], "ko")
     (scatter2,) = ax.plot([], [], "bx", markersize=14, mew=10)
@@ -59,7 +59,8 @@ def plot_pos_over_time(x, y, rate=2, save=False):
     saved_times = []
 
     print(
-        "Press space to save time, d to delete last time, q to quit, c to exit program"
+        "Press space to save time, d to delete last time, " +
+        "q to quit, c to exit program, i to set skip amount."
     )
 
     def init():
@@ -80,8 +81,8 @@ def plot_pos_over_time(x, y, rate=2, save=False):
         global frame_time
         global do_skip
         if do_skip:
-            # skip 30 seconds ahead
-            frame += 27 * 50
+            # skip 27 seconds ahead
+            frame += skip_rate * 50
         scatter.set_data(x[0:frame], y[0:frame])
 
         other_data_x = []
@@ -115,7 +116,7 @@ def plot_pos_over_time(x, y, rate=2, save=False):
         if event.key == "c":
             print("Quitting program")
             n_quit.append("False")
-            plt.close()
+            plt.close()            
 
     num_samples = int(len(x) // rate)
     interval = int(20 // rate)
