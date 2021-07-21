@@ -60,7 +60,7 @@ def plot_pos_over_time(x, y, rate=2, skip_rate=27, save=False):
 
     print(
         "Press space to save time, d to delete last time, " +
-        "q to quit, c to exit program, i to set skip amount."
+        "q to quit, c to exit program."
     )
 
     def init():
