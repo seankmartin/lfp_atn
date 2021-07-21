@@ -1,6 +1,7 @@
 """simuran_batch_params.py describes behaviour for recursing through directories."""
 
 import os
+from lfp_atn_simuran.analysis.spike_lfp import recording_spike_lfp, combine_results
 
 # The magic string __dirname__, is replaced by a directory name that is passed through command line
 dirname = "__dirname__"
@@ -12,11 +13,11 @@ cell_list_path = os.path.join(this_dirname, "CTRL_Lesion_cells_filled_eeg.xlsx")
 
 # The function to run on each recording in the cell list
 # This is required
-fn_to_run = None
+fn_to_run = recording_spike_lfp
 
 # The function to run after analysing the cell lists
 # This can be left as None
-after_fn = None
+after_fn = combine_results
 
 # out_dir can be left as None to automatically name
 out_dir = None
