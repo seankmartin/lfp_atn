@@ -11,14 +11,20 @@ here = os.path.dirname(os.path.abspath(__file__))
 cfg = read_cfg(os.path.join(here, "dodo.cfg"), verbose=False)
 num_workers = cfg.get("DEFAULT", "num_workers")
 dirname = cfg.get("DEFAULT", "dirname")
+main_cfg_path = cfg.get("DEFAULT", "cfg_path")
+kwargs = {
+    "num_workers": num_workers,
+    "dirname": dirname,
+    "cfg_path": main_cfg_path,
+}
 
 
 def task_list_openfield():
     return create_task(
         os.path.join(here, "lfp_atn_simuran", "multi_runs", "run_openfield.py"),
-        ["do_nothing.py"],
-        num_workers=num_workers,
-        dirname=dirname,
+        ["fn_list_recordings.py"],
+        reason="List the recordings that are analysed in openfield.",
+        **kwargs
     )
 
 
@@ -26,8 +32,8 @@ def task_coherence():
     return create_task(
         os.path.join(here, "lfp_atn_simuran", "multi_runs", "run_coherence.py"),
         ["plot_coherence.py"],
-        num_workers=num_workers,
-        dirname=dirname,
+        reason="Analyse coherence between SUB and RSC in the openfield data.",
+        **kwargs,
     )
 
 
@@ -35,17 +41,17 @@ def task_lfp_plot():
     return create_task(
         os.path.join(here, "lfp_atn_simuran", "multi_runs", "run_lfp_plot.py"),
         ["plot_lfp_eg.py"],
-        num_workers=num_workers,
-        dirname=dirname,
+        reason="Plot first 100s of each recording in openfield for LFP inspection.",
+        **kwargs,
     )
 
 
-def task_theta_power():
+def task_lfp_power():
     return create_task(
         os.path.join(here, "lfp_atn_simuran", "multi_runs", "run_spectra.py"),
         ["simuran_theta_power.py"],
-        num_workers=num_workers,
-        dirname=dirname,
+        reason="Power analysis within the openfield in SUB and RSC.",
+        **kwargs,
     )
 
 
@@ -53,8 +59,8 @@ def task_lfp_rate():
     return create_task(
         os.path.join(here, "lfp_atn_simuran", "multi_runs", "run_lfp_rate.py"),
         ["simuran_lfp_rate.py"],
-        num_workers=num_workers,
-        dirname=dirname,
+        reason="Rate maps of LFP (like a firing map, but with LFP amplitude).",
+        **kwargs,
     )
 
 
@@ -62,8 +68,8 @@ def task_lfp_speed():
     return create_task(
         os.path.join(here, "lfp_atn_simuran", "multi_runs", "run_speed_theta.py"),
         ["speed_lfp.py"],
-        num_workers=num_workers,
-        dirname=dirname,
+        reason="Relation of LFP power and speed in openfield.",
+        **kwargs,
     )
 
 
