@@ -1,42 +1,55 @@
+"""simuran_batch_params.py describes behaviour for recursing through directories."""
+
 import os
 
-import simuran
+# The magic string __dirname__, is replaced by a directory name that is passed through command line
+dirname = "__dirname__"
+# The magic string __thisdirname__ is also available, which is replaced by the directory that this file is in.
+this_dirname = "__thisdirname__"
 
-from lfp_atn_simuran.analysis.spike_lfp import recording_spike_lfp, combine_results
-from lfp_atn_simuran.analysis.parse_cfg import parse_cfg_info
+# The path to the cell list location
+cell_list_path = os.path.join(this_dirname, "CTRL_Lesion_cells_filled_eeg.xlsx")
 
-here = os.path.dirname(os.path.abspath(__file__))
-herename = os.path.splitext(os.path.basename(__file__))[0]
+# The function to run on each recording in the cell list
+# This is required
+fn_to_run = None
 
+# The function to run after analysing the cell lists
+# This can be left as None
+after_fn = None
 
-def main():
-    cfg = parse_cfg_info()
-    out_dir = os.path.abspath(os.path.join(here, "..", "sim_results", herename))
-    os.makedirs(out_dir, exist_ok=True)
-    cell_list = os.path.join(here, "CTRL_Lesion_cells_filled_eeg.xlsx")
-    headers = [
-        "STA_SUB",
-        "SFC_SUB",
-        "STA_RSC",
-        "SFC_RSC",
-        "Time",
-        "Frequency",
-        "Mean_Phase_SUB",
-        "Mean_Phase_Count_SUB",
-        "Resultant_Phase_Vector_SUB",
-        "Mean_Phase_RSC",
-        "Mean_Phase_Count_RSC",
-        "Resultant_Phase_Vector_RSC",
-    ]
-    simuran.analyse_cell_list(
-        cell_list,
-        recording_spike_lfp,
-        headers,
-        combine_results,
-        out_dir,
-        fn_kwargs=cfg,
-    )
+# out_dir can be left as None to automatically name
+out_dir = None
 
+# Arguments to pass into fn_to_run
+fn_args = []
 
-if __name__ == "__main__":
-    main()
+# Keyword arguments to pass into fn_to_run
+# By default these are added to the config file chosen
+fn_kwargs = {}
+
+# Headers for the output
+headers = [
+    "STA_SUB",
+    "SFC_SUB",
+    "STA_RSC",
+    "SFC_RSC",
+    "Time",
+    "Frequency",
+    "Mean_Phase_SUB",
+    "Mean_Phase_Count_SUB",
+    "Resultant_Phase_Vector_SUB",
+    "Mean_Phase_RSC",
+    "Mean_Phase_Count_RSC",
+    "Resultant_Phase_Vector_RSC",
+]
+
+params = {
+    "cell_list_path": cell_list_path,
+    "function_to_run": fn_to_run,
+    "after_fn": after_fn,
+    "headers": headers,
+    "out_dir": out_dir,
+    "fn_args": fn_args,
+    "fn_kwargs": fn_kwargs,
+}

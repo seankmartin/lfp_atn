@@ -2,7 +2,6 @@ import os
 
 import simuran
 
-from lfp_atn_simuran.analysis.spike_lfp import recording_spike_lfp
 from lfp_atn_simuran.analysis.speed_lfp import (
     recording_speed_ibi,
     recording_ibi_headings,

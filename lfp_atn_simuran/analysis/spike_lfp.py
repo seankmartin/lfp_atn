@@ -157,9 +157,10 @@ def combine_results(info, extra):
     import os
     import simuran
     import seaborn as sns
-    from lfp_atn_simuran.analysis.parse_cfg import parse_cfg_info
 
-    cfg = parse_cfg_info()
+    ## TODO replace all of these
+    cfg = simuran.config_handler.parse_config()
+    print(cfg)
     base_dir = cfg.get("cfg_base_dir")
     img_format = cfg.get("image_format")
 
