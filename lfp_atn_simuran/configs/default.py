@@ -12,7 +12,7 @@ params = {
     "fmin": 1,
     "fmax": 100,
     "theta_min": 6,
-    "theta_max": 10,
+    "theta_max": 12,
     "delta_min": 1.5,
     "delta_max": 4,
 
