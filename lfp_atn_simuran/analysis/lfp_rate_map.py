@@ -13,7 +13,7 @@ import matplotlib.colors as mcol
 from math import floor, ceil
 
 from lfp_atn_simuran.analysis.lfp_clean import LFPClean
-from simuran import SimuranFigure
+import simuran
 
 
 def lfp_rate_recording(recording, base_dir, figures, **kwargs):
@@ -60,7 +60,9 @@ def lfp_rate_recording(recording, base_dir, figures, **kwargs):
 
     fig.tight_layout()
     out_name = f"{save_name}--lfp_rate"
-    figures.append(SimuranFigure(fig, out_name, dpi=300, format=save_format, done=True))
+    figures.append(
+        simuran.SimuranFigure(fig, out_name, dpi=300, format=save_format, done=True)
+    )
 
     return results
 
@@ -158,7 +160,8 @@ def lfp_rate(self, lfp_signal, low_f=None, high_f=None, filter_kwargs=None, **kw
                 np.abs(lfp_samples[low_sample : high_sample + 1])
             )
         elif do_once:
-            logging.warning(
+            # TODO test working
+            simuran.log.warning(
                 "Position data ({}s) is longer than EEG data ({}s)".format(
                     time_to_use[-1], len(lfp_samples) / lfp_signal.get_sampling_rate()
                 )
