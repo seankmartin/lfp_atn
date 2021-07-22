@@ -19,13 +19,12 @@ def plot_all_spectrum(info, out_dir, name):
     import simuran
 
     from neurochat.nc_utils import smooth_1d
-    from lfp_atn_simuran.analysis.parse_cfg import parse_cfg_info
     from skm_pyutils.py_plot import UnicodeGrabber
 
-    cfg = parse_cfg_info()
+    cfg = simuran.parse_config()
 
     scale = cfg["psd_scale"]
-    base_dir = cfg["cfg_base_dir"]
+    # base_dir = cfg["cfg_base_dir"]
 
     os.makedirs(out_dir, exist_ok=True)
 

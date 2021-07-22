@@ -6,7 +6,6 @@ that will be performed on each recording in a loaded container.
 def setup_functions():
     """Establish the functions to run and arguments to pass."""
     from frequency_analysis import powers, per_animal_psd
-    from parse_cfg import parse_cfg_info
     functions = [powers, (per_animal_psd, "run_after")]
 
     # The list of functions to run, in order
@@ -57,7 +56,7 @@ def setup_functions():
 
         """
         args = [recording_container.base_dir, figures]
-        kwargs = parse_cfg_info()
+        kwargs = {}
         args2 = ["__dirname__", figures]
         arguments = {
             "powers": (args, kwargs),

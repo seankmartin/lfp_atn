@@ -18,7 +18,6 @@ try:
     from lfp_atn_simuran.analysis.lfp_clean import LFPClean
     from lfp_atn_simuran.analysis.plot_coherence import plot_recording_coherence
     from lfp_atn_simuran.analysis.frequency_analysis import powers
-    from lfp_atn_simuran.analysis.parse_cfg import parse_cfg_info
 
     do_analysis = True
 except ImportError:
@@ -37,7 +36,7 @@ def main(excel_location, base_dir, plot_individual_sessions):
 
     # Setup
     df = pd.read_excel(excel_location)
-    cfg = parse_cfg_info()
+    cfg = simuran.parse_config()
     delta_min = cfg["delta_min"]
     delta_max = cfg["delta_max"]
     theta_min = cfg["theta_min"]

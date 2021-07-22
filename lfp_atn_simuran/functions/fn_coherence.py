@@ -11,7 +11,6 @@ def setup_functions():
     # Each function should take as its first argument a recording object
     # This should be an actual function, as opposed to a string name
     from plot_coherence import plot_recording_coherence
-    from parse_cfg import parse_cfg_info
 
     functions = [plot_recording_coherence]
 
@@ -47,7 +46,7 @@ def setup_functions():
             The arguments to use for each function in functions
 
         """
-        kwargs = parse_cfg_info()
+        kwargs = {}
         args = [figures, recording_container.base_dir]
         arguments = {"plot_recording_coherence": (args, kwargs)}
         

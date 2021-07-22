@@ -11,7 +11,7 @@ def setup_functions():
     # Each function should take as its first argument a recording object
     # This should be an actual function, as opposed to a string name
     from speed_lfp import speed_lfp_amp
-    from parse_cfg import parse_cfg_info
+    import simuran
 
     functions = [speed_lfp_amp]
 
@@ -47,7 +47,7 @@ def setup_functions():
             The arguments to use for each function in functions
 
         """
-        kwargs = parse_cfg_info()
+        kwargs = simuran.parse_config()
         kwargs["fmin"] = kwargs["theta_min"]
         kwargs["fmax"] = kwargs["theta_max"]
         args = [figures, recording_container.base_dir]
