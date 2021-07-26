@@ -7,19 +7,22 @@ This should contain information about the recording,
 such as the number electrodes in the recording.
 """
 
-
+# TODO this is a temp fix for some recordings not having all LFP
 def setup_signals():
     """Set up the signals (such as eeg or lfp)."""
 
     # The total number of signals in the recording
-    num_signals = 32
+    # num_signals = 32
+    num_signals = 4
 
     # What brain region each signal was recorded from
-    regions = ["SUB"] * 2 + ["RSC"] * 2 + ["SUB"] * 28
+    # regions = ["SUB"] * 2 + ["RSC"] * 2 + ["SUB"] * 28
+    regions = ["SUB"] * 2 + ["RSC"] * 2
 
     # If the wires were bundled, or any other kind of grouping existed
     # If no grouping, grouping = [i for i in range(num_signals)]
-    groups = ["LFP", "LFP", "LFP", "LFP"] + [i for i in range(num_signals - 4)]
+    # groups = ["LFP", "LFP", "LFP", "LFP"] + [i for i in range(num_signals - 4)]
+    groups = ["LFP", "LFP", "LFP", "LFP"]
 
     # The sampling rate in Hz of each signal
     sampling_rate = [250] * num_signals

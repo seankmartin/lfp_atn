@@ -7,8 +7,9 @@ start_dir = os.path.abspath(os.path.join("__dirname__", "CSubRet4", "recording")
 
 # regex_filters should be a list of regex patterns to match against.
 regex_filters = [
-    "(^small sq up.*/.*[1-9]/.*)|(^small sq_.*/.*[1-9])",
-    ".*(?<!16112017)$",
+    "(^small sq.*/.*[1-9]/.*)|(^small sq_.*/.*[1-9])",
+    ".*(?<!16112017)$", ".*(?<!17112017)$", ".*(?<!18112017)$", ".*(?<!21112017)$",
+    ".*(?<!16112017/S1)$" 
 ]
 
 # Overwrites existing parameter files (simuran_params.py) if they exist.
