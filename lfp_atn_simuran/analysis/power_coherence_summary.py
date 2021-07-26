@@ -1,15 +1,15 @@
-def do_coherence(info, extra_info):
+def do_coherence(info, extra_info, **kwargs):
     data, fnames = info
     out_dir, name = extra_info
-    plot_all_lfp(data, out_dir, name)
+    plot_all_lfp(data, out_dir, name, **kwargs)
 
 
-def do_spectrum(info, extra_info):
+def do_spectrum(info, extra_info, **kwargs):
     out_dir, name = extra_info
-    plot_all_spectrum(info, out_dir, name)
+    plot_all_spectrum(info, out_dir, name, **kwargs)
 
 
-def plot_all_spectrum(info, out_dir, name):
+def plot_all_spectrum(info, out_dir, name, **kwargs):
     import os
 
     import numpy as np
@@ -21,7 +21,7 @@ def plot_all_spectrum(info, out_dir, name):
     from neurochat.nc_utils import smooth_1d
     from skm_pyutils.py_plot import UnicodeGrabber
 
-    cfg = simuran.parse_config()
+    cfg = kwargs
 
     scale = cfg["psd_scale"]
     # base_dir = cfg["cfg_base_dir"]
@@ -139,7 +139,7 @@ def plot_all_spectrum(info, out_dir, name):
         plt.close("all")
 
 
-def plot_all_lfp(info, out_dir, name):
+def plot_all_lfp(info, out_dir, name, **kwargs):
     import os
 
     import numpy as np

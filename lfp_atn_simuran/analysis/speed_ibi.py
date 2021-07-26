@@ -122,6 +122,7 @@ def speed_ibi(self, spike_train, **kwargs):
 
     return pd_df, ax, spear_r, spear_p, len(ibi) + 1
 
+
 def recording_ibi_headings():
     return [
         "IBI R",
@@ -134,6 +135,7 @@ def recording_ibi_headings():
     ]
 
 
+# TODO add average IBI to this to comp avg speed and avg IBI
 def recording_speed_ibi(recording, out_dir, base_dir, **kwargs):
     """This is performed per cell in the recording."""
     # How many results expected in a row?
@@ -218,3 +220,25 @@ def recording_speed_ibi(recording, out_dir, base_dir, **kwargs):
             unit.underlying.reset_results()
 
     return output
+
+# TODO integrate this function
+def vis_speed_ibi(df, out_dir=None):
+    simuran.set_plot_style()
+
+    fig, ax = plt.subplots()
+    sns.scatterplot(
+        data=df, x="Mean speed", y="IBI R", hue="State", style="State", ax=ax
+    )
+
+    simuran.despine()
+
+    fig.savefig("Speed_IBI.png")
+
+
+if __name__ == "__main__":
+    import pandas as pd
+    
+    location = r"E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\list_spike_ibi\CTRL_Lesion_cells_filled_spike_ibi_and_locking_results.xlsx"
+
+    df = pd.read_excel(location)
+    vis_speed_ibi(df)
