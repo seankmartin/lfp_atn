@@ -75,7 +75,7 @@ def task_lfp_speed():
 
 def task_speed_ibi():
     return create_list_task(
-        os.path.join(here, "lfp_atn_simuran", "cell_lists", "list_speed_ibi.py"),
+        os.path.join(here, "lfp_atn_simuran", "multi_runs", "run_speed_ibi.py"),
         ["speed_ibi.py"],
         reason="Speed to IBI and firing rate relationship.",
         **kwargs,
@@ -83,7 +83,7 @@ def task_speed_ibi():
 
 def task_spike_lfp():
     return create_list_task(
-        os.path.join(here, "lfp_atn_simuran", "cell_lists", "list_spike_lfp.py"),
+        os.path.join(here, "lfp_atn_simuran", "multi_runs", "run_spike_lfp.py"),
         ["spike_lfp.py", "lfp_clean.py"],
         reason="Spike to LFP relationship.",
         **kwargs,

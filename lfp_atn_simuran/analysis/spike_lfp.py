@@ -12,12 +12,12 @@ from skm_pyutils.py_plot import UnicodeGrabber
 import matplotlib.pyplot as plt
 
 here = os.path.dirname(os.path.abspath(__file__))
-output_dir = os.path.abspath(os.path.join(here, "..", "sim_results", "spike_phase"))
+output_dir = os.path.abspath(os.path.join(here, "..", "sim_results", "spike_lfp"))
 
 
 def plot_phase(graph_data):
-    phBins = graph_data['phBins']
-    phCount = graph_data['phCount']
+    phBins = graph_data["phBins"]
+    phCount = graph_data["phCount"]
 
     fig = plt.figure()
     ax = fig.add_subplot(projection="polar")
@@ -40,6 +40,24 @@ def plot_phase(graph_data):
     plt.title("LFP phase distribution (red= mean direction)")
 
     return fig
+
+
+def spike_lfp_headings():
+    headers = [
+        "STA_SUB",
+        "SFC_SUB",
+        "STA_RSC",
+        "SFC_RSC",
+        "Time",
+        "Frequency",
+        "Mean_Phase_SUB",
+        "Mean_Phase_Count_SUB",
+        "Resultant_Phase_Vector_SUB",
+        "Mean_Phase_RSC",
+        "Mean_Phase_Count_RSC",
+        "Resultant_Phase_Vector_RSC",
+    ]
+    return headers
 
 
 def recording_spike_lfp(recording, clean_method="avg", **kwargs):
@@ -153,16 +171,13 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
     return output
 
 
-def combine_results(info, extra):
+def combine_results(info, extra, **kwargs):
     import os
     import simuran
     import seaborn as sns
 
-    ## TODO replace all of these
-    cfg = simuran.config_handler.parse_config()
-    print(cfg)
+    cfg = simuran.parse_config()
     base_dir = cfg.get("cfg_base_dir")
-    img_format = cfg.get("image_format")
 
     out_dir, filename = extra
     base, ext = os.path.splitext(os.path.basename(filename))
@@ -179,8 +194,6 @@ def combine_results(info, extra):
         for row in info.itertuples():
             dir_ = row.Directory[len(base_dir + os.sep) :]
             group = dir_[0]
-            animal_name = dir_.split(os.sep)[0].split("_")[0]
-            number = int(animal_name[-1])
 
             if group == "C":
                 group = "Control"
@@ -228,7 +241,7 @@ def combine_results(info, extra):
         mc = UnicodeGrabber.get("micro")
         ax.set_ylabel(f"Spike triggered average {mc}V")
         name = f"average_sta_{out_region}"
-        fig.savefig(os.path.join(out_dir, name + "." + img_format))
+        fig.savefig(os.path.join(out_dir, name + "." + "pdf"))
         plt.close(fig)
 
         fig, ax = plt.subplots()
@@ -237,7 +250,7 @@ def combine_results(info, extra):
         )
         ax.set_ylabel("Spike field coherence")
         name = f"average_sfc_{out_region}"
-        fig.savefig(os.path.join(out_dir, name + "." + img_format))
+        fig.savefig(os.path.join(out_dir, name + "." + "pdf"))
         plt.close(fig)
 
         out_fname = os.path.join(out_dir, base + f"__sta_{out_region}" + ext)

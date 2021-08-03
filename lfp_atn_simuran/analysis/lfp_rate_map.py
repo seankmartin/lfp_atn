@@ -160,7 +160,6 @@ def lfp_rate(self, lfp_signal, low_f=None, high_f=None, filter_kwargs=None, **kw
                 np.abs(lfp_samples[low_sample : high_sample + 1])
             )
         elif do_once:
-            # TODO test working
             simuran.log.warning(
                 "Position data ({}s) is longer than EEG data ({}s)".format(
                     time_to_use[-1], len(lfp_samples) / lfp_signal.get_sampling_rate()

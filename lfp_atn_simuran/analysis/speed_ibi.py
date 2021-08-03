@@ -1,6 +1,5 @@
 from copy import deepcopy
 import os
-import logging
 from math import floor, ceil
 
 import matplotlib.pyplot as plt
@@ -8,6 +7,7 @@ import numpy as np
 import simuran
 import scipy.stats
 import seaborn as sns
+import pandas as pd
 from skm_pyutils.py_table import list_to_df
 
 
@@ -83,7 +83,6 @@ def calc_ibi(spike_train, speed, speed_sr, burst_thresh=5):
 
         # ibi in sec, burst_duration in ms
     else:
-        # TODO test this
         simuran.log.warning("No burst detected")
         return None, None
     ibi = np.array(ibi) / 1000
@@ -130,12 +129,13 @@ def recording_ibi_headings():
         "Number of bursts",
         "Speed R",
         "Speed P",
+        "Median speed",
         "Mean speed",
+        "Median IBI",
         "Mean firing rate",
     ]
 
 
-# TODO add average IBI to this to comp avg speed and avg IBI
 def recording_speed_ibi(recording, out_dir, base_dir, **kwargs):
     """This is performed per cell in the recording."""
     # How many results expected in a row?
@@ -160,6 +160,7 @@ def recording_speed_ibi(recording, out_dir, base_dir, **kwargs):
         )
         spatial_error = True
 
+    os.makedirs(out_dir, exist_ok=True)
     spatial = recording.spatial.underlying
     for unit, to_analyse in zip(recording.units, all_analyse):
 
@@ -202,16 +203,17 @@ def recording_speed_ibi(recording, out_dir, base_dir, **kwargs):
 
             op[3] = res["lin_fit_r"]
             op[4] = res["lin_fit_p"]
-            op[5] = np.mean(np.array(spatial.get_speed()))
-            op[6] = len(spike_train) / unit.underlying.get_duration()
+            op[5] = np.median(np.array(spatial.get_speed()))
+            op[6] = np.mean(np.array(spatial.get_speed()))
+            op[7] = np.median(np.diff(spike_train))
+            op[8] = len(spike_train) / unit.underlying.get_duration()
 
             simuran.despine()
             plt.tight_layout()
             out_name_end = recording.get_name_for_save(base_dir)
             out_name_end += "_T{}_SS{}".format(out_str_start, str(cell))
             out_name = os.path.join(out_dir, out_name_end) + img_format
-            # TODO test this
-            simuran.print("Saving plot to {}".format(out_name))
+            
             fig.savefig(out_name, dpi=400)
             plt.close(fig)
 
@@ -221,23 +223,71 @@ def recording_speed_ibi(recording, out_dir, base_dir, **kwargs):
 
     return output
 
-# TODO integrate this function
 def vis_speed_ibi(df, out_dir=None):
     simuran.set_plot_style()
 
     fig, ax = plt.subplots()
     sns.scatterplot(
-        data=df, x="Mean speed", y="IBI R", hue="State", style="State", ax=ax
+        data=df, x="Mean speed", y="IBI R", hue="Group", style="Spatial", ax=ax
     )
-
     simuran.despine()
+    out_name = os.path.join(out_dir, "..", "summary", "Speed_IBIR.pdf")
+    fig.savefig(out_name, dpi=400)#
+    plt.close(fig)
 
-    fig.savefig("Speed_IBI.png")
+    fig, ax = plt.subplots()
+    sns.scatterplot(
+        data=df, x="Mean speed", y="Median IBI", hue="Group", style="Spatial", ax=ax
+    )
+    simuran.despine()
+    out_name = os.path.join(out_dir, "..", "summary", "Speed_IBI_Median.pdf")
+    fig.savefig(out_name, dpi=400)
+    plt.close(fig)
+
+
+def combine_results(info, extra_info, **kwargs):
+    here = os.path.dirname(os.path.abspath(__file__))
+    cell_list_location = os.path.join(
+        here, "..", "cell_lists", "CTRL_Lesion_cells_filled_eeg.xlsx"
+    )
+    df = pd.read_excel(cell_list_location)
+
+    cfg = simuran.parse_config()
+    base_dir = cfg.get("cfg_base_dir")
+
+    new_list = []
+    new_list2 = []
+    for row in info.itertuples():
+        dir_ = row.Directory[len(base_dir + os.sep) :]
+        group = dir_[0]
+        if group == "C":
+            group = "Control"
+        elif group == "L":
+            group = "ATNx (Lesion)"
+        else:
+            raise ValueError("unsupported group {}".format(group))
+
+        spatial = (
+            df[
+                (df["Filename"] == row.Filename)
+                & (df["Group"] == row.Group)
+                & (df["Unit"] == row.Unit)
+            ]["class"]
+            .values.flatten()[0]
+            .split("_")[0]
+        )
+        if group == "ATNx (Lesion)" and spatial == "S":
+            raise RuntimeError("Incorrect parsing")
+        new_list.append(spatial)
+        new_list2.append(group)
+    
+    info["Spatial"] = new_list
+    info["Group"] = new_list2
+
+    vis_speed_ibi(info, out_dir=extra_info[0])
 
 
 if __name__ == "__main__":
-    import pandas as pd
-    
     location = r"E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\list_spike_ibi\CTRL_Lesion_cells_filled_spike_ibi_and_locking_results.xlsx"
 
     df = pd.read_excel(location)
