@@ -9,6 +9,11 @@ start_dir = os.path.abspath(os.path.join("__dirname__", "CSubRet5_sham", "record
 regex_filters = [
     "(^small sq up.*/.*[1-9]/.*)|(^small sq_.*/.*[1-9])",
     ".*(?<!16112017)$",
+    ".*(?<!16112017/S1)$",
+    # ".*(?<!17112017)$",
+    # ".*(?<!18112017)$",
+    ".*(?<!24112017)$",  # Wrong layout
+    ".*(?<!26112017)$",  # Wrong layout
 ]
 
 # Overwrites existing parameter files (simuran_params.py) if they exist.

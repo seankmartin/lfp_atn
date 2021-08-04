@@ -6,7 +6,11 @@ import os
 start_dir = os.path.abspath(os.path.join("__dirname__", "LSR6"))
 
 # regex_filters should be a list of regex patterns to match against.
-regex_filters = ["^screening.*/.*[1-9]$"]
+regex_filters = [
+    "^screening.*/.*[1-9]$",
+    ".*(?<!12032018)$",
+    ".*(?<!13032018)$",
+]
 
 # Overwrites existing parameter files (simuran_params.py) if they exist.
 overwrite = True
