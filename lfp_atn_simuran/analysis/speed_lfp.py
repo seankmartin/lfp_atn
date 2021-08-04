@@ -17,6 +17,7 @@ from lfp_atn_simuran.analysis.lfp_clean import LFPClean
 
 # 3. Compare theta and speed
 def speed_vs_amp(self, lfp_signal, low_f, high_f, filter_kwargs=None, **kwargs):
+    """Self represents an nc_spatial object."""
     lim = kwargs.get("range", [0, self.get_duration()])
     samples_per_sec = kwargs.get("samplesPerSec", 10)
     do_once = True
@@ -59,7 +60,7 @@ def speed_vs_amp(self, lfp_signal, low_f, high_f, filter_kwargs=None, **kwargs):
                 np.abs(lfp_samples[low_sample : high_sample + 1])
             )
         elif do_once:
-            logging.warning(
+            simuran.log.warning(
                 "Position data ({}s) is longer than EEG data ({}s)".format(
                     time_to_use[-1], len(lfp_samples) / lfp_signal.get_sampling_rate()
                 )
@@ -203,17 +204,17 @@ def combine_results(info, extra_info, **kwargs):
         n_ctrl_animals += r_ctrl / len(fname_list)
         n_lesion_animals += r_les / len(fname_list)
 
-    print(f"{n_ctrl_animals} CTRL animals, {n_lesion_animals} Lesion animals")
+    simuran.print(f"{n_ctrl_animals} CTRL animals, {n_lesion_animals} Lesion animals")
 
     df = pd.concat(df_lists, ignore_index=True)
     df.replace("Control", f"Control (ATN,   N = {int(n_ctrl_animals)})", inplace=True)
     df.replace("Lesion", f"Lesion  (ATNx, N = {int(n_lesion_animals)})", inplace=True)
 
-    print("Saving plots to {}".format(os.path.join(out_dir, "summary")))
+    simuran.print("Saving plots to {}".format(os.path.join(out_dir, "summary")))
 
     control_df = df[df["Group"] == f"Lesion  (ATNx, N = {int(n_lesion_animals)})"]
     sub_df = control_df[control_df["region"] == "RSC"]
-    print(sub_df.groupby("Speed").mean())
+    simuran.print(sub_df.groupby("Speed").mean())
     for ci, oname in zip([95, None], ["_ci", ""]):
         sns.lineplot(
             data=df[df["region"] == "SUB"],
@@ -233,7 +234,7 @@ def combine_results(info, extra_info, **kwargs):
         os.makedirs(os.path.join(out_dir, "summary"), exist_ok=True)
         plt.savefig(
             os.path.join(
-                out_dir, "summary", name + "--sub--speed--theta{}.png".format(oname)
+                out_dir, "summary", name + "--sub--speed--theta{}.pdf".format(oname)
             ),
             dpi=400,
         )
@@ -257,7 +258,7 @@ def combine_results(info, extra_info, **kwargs):
 
         plt.savefig(
             os.path.join(
-                out_dir, "summary", name + "--rsc--speed--theta{}.png".format(oname)
+                out_dir, "summary", name + "--rsc--speed--theta{}.pdf".format(oname)
             ),
             dpi=400,
         )

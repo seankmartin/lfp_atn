@@ -97,7 +97,7 @@ def per_animal_psd(recording_container, base_dir, figures, **kwargs):
         name = recording_container.base_dir[len(base_dir + os.sep) :].replace(
             os.sep, "--"
         )
-        out_name = name + "--sub--power{}".format(oname)
+        out_name = os.path.join("per_animal_psd", name + "--sub--power{}".format(oname))
         fig = simuran.SimuranFigure(fig, out_name, dpi=400, done=True, format=fmt)
         figures.append(fig)
 
@@ -122,7 +122,7 @@ def per_animal_psd(recording_container, base_dir, figures, **kwargs):
             raise ValueError("Unsupported scale {}".format(scale))
         plt.tight_layout()
 
-        out_name = name + "--rsc--power{}".format(oname)
+        out_name = os.path.join("per_animal_psd", name + "--rsc--power{}".format(oname))
         fig = simuran.SimuranFigure(fig, out_name, dpi=400, done=True, format=fmt)
         figures.append(fig)
 

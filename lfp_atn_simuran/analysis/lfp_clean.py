@@ -128,16 +128,6 @@ def z_score_signals(signals, z_threshold=1.1, verbose=False, clean=True):
     #     div = np.where(div == 0, 1, div)
     #     signals_[i] = (signals_[i] - np.mean(signals_[i])) / div
 
-    avg_sig = np.mean(signals_, axis=1)
-    std_sig = np.std(signals_, axis=1)
-    # Use this with axis = 0 for per signal
-    std_sig = np.where(std_sig == 0, 1, std_sig)
-
-    z_scores = np.zeros(shape=(len(signals_), len(signals_[0])))
-
-    for i, s in enumerate(signals_):
-        z_scores[i] = (s - avg_sig[i]) / std_sig[i]
-
     # 1. Try to identify dead channels
     if clean:
         good_signals, bad_signals, good_idx, bad_idx, _ = detect_outlying_signals(
@@ -148,17 +138,18 @@ def z_score_signals(signals, z_threshold=1.1, verbose=False, clean=True):
                 print(
                     "Excluded {} signals with indices {}".format(len(bad_idx), bad_idx)
                 )
-        z_scores = z_scores[good_idx]
     else:
         bad_idx = []
     
     for i in range(len(signals_)):
-        div = np.std(signals_[i])
-        div = np.where(div == 0, 1, div)
-        signals_[i] = (signals_[i] - np.mean(signals_[i])) / div
+        if i not in bad_idx:
+            div = np.std(signals_[i])
+            div = np.where(div == 0, 1, div)
+            signals_[i] = (signals_[i] - np.mean(signals_[i])) / div
     res = np.mean(signals_, axis=0)
     
     # Technically, the signals are now dimensionless
+    # Including unit for compatibability
     if hasattr(signals[0], "unit"):
         return (res * signals[0].unit), bad_idx, signals_
     else:
@@ -287,6 +278,19 @@ class LFPClean(object):
             container = simuran.GenericContainer(signals[0].__class__)
             container.container = [s for s in signals if getattr(s, prop) in channels]
             result, extra_bad = self.avg_method(
+                container, min_f, max_f, clean=True, **filter_kwargs
+            )
+            bad_chans = [s.channel for s in signals if getattr(s, prop) not in channels]
+            bad_chans += [signals[i].channel for i in extra_bad]
+            results["bad_channels"] = bad_chans
+        elif self.method == "pick_zscore":
+            channels = method_kwargs.get("channels")
+            prop = method_kwargs.get("pick_property", "channel")
+            if channels is None:
+                raise ValueError("You must pass the keyword arg channels for pick")
+            container = simuran.GenericContainer(signals[0].__class__)
+            container.container = [s for s in signals if getattr(s, prop) in channels]
+            result, extra_bad = self.z_score_method(
                 container, min_f, max_f, clean=True, **filter_kwargs
             )
             bad_chans = [s.channel for s in signals if getattr(s, prop) not in channels]

@@ -66,3 +66,9 @@ Lesion:
 ## Analysis
 
 See `lfp_atn_simuran/multi_runs`
+
+## Papers
+
+- Z-score LFP is common and found in many papers.
+- Power spectrum is a common analysis.
+- T-maze coherence is from a youtube video, check Matheus mails.
