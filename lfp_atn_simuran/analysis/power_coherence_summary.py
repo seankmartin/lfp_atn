@@ -20,6 +20,7 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
 
     from neurochat.nc_utils import smooth_1d
     from skm_pyutils.py_plot import UnicodeGrabber
+    from skm_pyutils.py_table import list_to_df
     from fooof import FOOOFGroup
 
     cfg = kwargs
@@ -92,8 +93,9 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
                         )
                         info_for_fooof_lesion[r]["spectra"].append(volts_scale)
 
-                # TEMP change to volts
-                for v1, v2, v3, v4 in zip(id_[0], volts_scale, id_[2], id_[3]):
+                # Can change to volts if in DB
+                # powers = volts_scale
+                for v1, v2, v3, v4 in zip(id_[0], powers, id_[2], id_[3]):
                     if float(v1) < fmax:
                         parsed_info.append([v1, v2, v3, v4])
 
@@ -171,10 +173,11 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
         plt.close("all")
 
     # FOOOF
+    peaks_data = []
     for r in ["SUB", "RSC"]:
         fg = FOOOFGroup(
             peak_width_limits=[1.0, 8.0],
-            max_n_peaks=3,
+            max_n_peaks=2,
             min_peak_height=0.1,
             peak_threshold=2.0,
             aperiodic_mode="fixed",
@@ -182,14 +185,18 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
 
         fooof_arr_s = np.array(info_for_fooof_ctrl[r]["spectra"])
         fooof_arr_f = np.array(info_for_fooof_ctrl[r]["frequency"])
-
         fg.fit(fooof_arr_f, fooof_arr_s, [1.5, fmax], progress="tqdm")
         out_name = name + f"--{r}--foof--ctrl.pdf"
         fg.save_report(out_name, os.path.join(out_dir, "summary"))
 
+        peaks = fg.get_params("peak_params", 0)[:, 0]
+
+        for p in peaks:
+            peaks_data.append([p, "Control", r])
+
         fg = FOOOFGroup(
             peak_width_limits=[1.0, 8.0],
-            max_n_peaks=3,
+            max_n_peaks=2,
             min_peak_height=0.1,
             peak_threshold=2.0,
             aperiodic_mode="fixed",
@@ -200,6 +207,27 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
         fg.fit(fooof_arr_f, fooof_arr_s, [1.5, fmax], progress="tqdm")
         out_name = name + f"--{r}--foof--lesion.pdf"
         fg.save_report(out_name, os.path.join(out_dir, "summary"))
+
+        peaks = fg.get_params("peak_params", 0)[:, 0]
+
+        for p in peaks:
+            peaks_data.append([p, "Lesion", r])
+
+    peaks_df = list_to_df(peaks_data, headers=["Peak frequency", "Group", "Region"])
+
+    for r in ["SUB", "RSC"]:
+        fig, ax = plt.subplots()
+        sns.histplot(
+            data=peaks_df[peaks_df["Region"] == r],
+            x="Peak frequency",
+            hue="Group",
+            multiple="stack",
+            # element="step",
+            ax=ax
+        )
+        simuran.despine()
+        out_name = os.path.join(out_dir, "summary", name + f"--foof--{r}combined.pdf")
+        fig.savefig(out_name, dpi=400)
 
 
 def plot_all_lfp(info, out_dir, name, **kwargs):
