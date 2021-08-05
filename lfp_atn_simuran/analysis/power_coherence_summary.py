@@ -20,6 +20,7 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
 
     from neurochat.nc_utils import smooth_1d
     from skm_pyutils.py_plot import UnicodeGrabber
+    from fooof import FOOOFGroup
 
     cfg = kwargs
 
@@ -35,6 +36,14 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
     fmax = 40
 
     parsed_info = []
+    info_for_fooof_ctrl = {
+        "SUB": {"frequency": None, "spectra": []},
+        "RSC": {"frequency": None, "spectra": []},
+    }
+    info_for_fooof_lesion = {
+        "SUB": {"frequency": None, "spectra": []},
+        "RSC": {"frequency": None, "spectra": []},
+    }
     data, fnames = info
     n_ctrl_animals = 0
     n_lesion_animals = 0
@@ -63,7 +72,28 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
                         kernel_type="hg",
                         kernel_size=5,
                     )
-                for v1, v2, v3, v4 in zip(id_[0], powers, id_[2], id_[3]):
+
+                if id_[2][0] == "Control":
+                    info_for_fooof_ctrl[r]["frequency"] = id_[0]
+                    if scale != "volts":
+                        max_pxx = item_dict[r + " max f"]
+                        volts_scale = (
+                            np.power(10.0, (np.array(powers).astype(np.float64) / 10.0))
+                            * max_pxx
+                        )
+                        info_for_fooof_ctrl[r]["spectra"].append(volts_scale)
+                else:
+                    info_for_fooof_lesion[r]["frequency"] = id_[0]
+                    if scale != "volts":
+                        max_pxx = item_dict[r + " max f"]
+                        volts_scale = (
+                            np.power(10.0, (np.array(powers).astype(np.float64) / 10.0))
+                            * max_pxx
+                        )
+                        info_for_fooof_lesion[r]["spectra"].append(volts_scale)
+
+                # TEMP change to volts
+                for v1, v2, v3, v4 in zip(id_[0], volts_scale, id_[2], id_[3]):
                     if float(v1) < fmax:
                         parsed_info.append([v1, v2, v3, v4])
 
@@ -90,6 +120,7 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
         )
         sns.despine(offset=0, trim=True)
         plt.xlabel("Frequency (Hz)")
+        plt.xlim(0, fmax)
         if scale == "volts":
             micro = UnicodeGrabber.get("micro")
             pow2 = UnicodeGrabber.get("pow2")
@@ -120,6 +151,7 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
         )
         sns.despine(offset=0, trim=True)
         plt.xlabel("Frequency (Hz)")
+        plt.xlim(0, fmax)
         if scale == "volts":
             micro = UnicodeGrabber.get("micro")
             pow2 = UnicodeGrabber.get("pow2")
@@ -137,6 +169,37 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
         )
 
         plt.close("all")
+
+    # FOOOF
+    for r in ["SUB", "RSC"]:
+        fg = FOOOFGroup(
+            peak_width_limits=[1.0, 8.0],
+            max_n_peaks=3,
+            min_peak_height=0.1,
+            peak_threshold=2.0,
+            aperiodic_mode="fixed",
+        )
+
+        fooof_arr_s = np.array(info_for_fooof_ctrl[r]["spectra"])
+        fooof_arr_f = np.array(info_for_fooof_ctrl[r]["frequency"])
+
+        fg.fit(fooof_arr_f, fooof_arr_s, [1.5, fmax], progress="tqdm")
+        out_name = name + f"--{r}--foof--ctrl.pdf"
+        fg.save_report(out_name, os.path.join(out_dir, "summary"))
+
+        fg = FOOOFGroup(
+            peak_width_limits=[1.0, 8.0],
+            max_n_peaks=3,
+            min_peak_height=0.1,
+            peak_threshold=2.0,
+            aperiodic_mode="fixed",
+        )
+
+        fooof_arr_s = np.array(info_for_fooof_lesion[r]["spectra"])
+        fooof_arr_f = np.array(info_for_fooof_lesion[r]["frequency"])
+        fg.fit(fooof_arr_f, fooof_arr_s, [1.5, fmax], progress="tqdm")
+        out_name = name + f"--{r}--foof--lesion.pdf"
+        fg.save_report(out_name, os.path.join(out_dir, "summary"))
 
 
 def plot_all_lfp(info, out_dir, name, **kwargs):
