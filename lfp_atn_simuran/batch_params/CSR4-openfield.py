@@ -6,17 +6,20 @@ import os
 start_dir = os.path.abspath(os.path.join("__dirname__", "CSubRet4", "recording"))
 
 # regex_filters should be a list of regex patterns to match against.
-regex_filters = [
-    "(^small sq.*/.*[1-9]/.*)|(^small sq_.*/.*[1-9])",
-    ".*(?<!16112017)$",
-    ".*(?<!16112017/S1)$",
-    # ".*(?<!17112017)$",
-    # ".*(?<!18112017)$",
-    # ".*(?<!21112017)$",
-    ".*(?<!23112017)$",  # Wrong layout
-    ".*(?<!24112017)$",  # Wrong layout
-    ".*(?<!26112017)$",  # Wrong layout
-]
+screening_regex = "(^small sq_.*/.*[1-9])"
+small_regex = "(^small sq up.*/.*[1-9]/.*)"
+big_regex = "(^big.*/.*[1-9]/.*)"
+
+regex_filters = [f"{small_regex}|{big_regex}"]
+
+# Habituation folders
+# ".*(?<!16112017/S1)$",
+# ".*(?<!17112017)$",
+# ".*(?<!18112017)$",
+# ".*(?<!21112017)$",
+# ".*(?<!23112017)$",  # Wrong layout
+# ".*(?<!24112017)$",  # Wrong layout
+# ".*(?<!26112017)$",  # Wrong layout
 
 # Overwrites existing parameter files (simuran_params.py) if they exist.
 overwrite = True

@@ -36,17 +36,16 @@ doit
 
 ### Open field recordings
 
-Only small arena recordings were considered to reduce variables.
-Recordings in the big square arena were not considered.
 Recordings were selected to be balanced for each animal (same number).
+Generally habituation recordings were excluded where possible, and if included, late habituation sessions were used, as the wires are moved less at this point.
 
 Control:
 
 1. CSR1 - all small square recordings (not habituation) (6 days)
 2. CSR2 - all small square recordings (not habituation) (6 days)
 3. CSR3 - all small square recordings (not habituation) (6 days)
-4. CSR4 - all small square recordings and some habituation (5 days, 6 records)
-5. CSR5 - all small square recordings and some habituation (5 days, 6 records)
+4. CSR4 - all small square recordings and big square (3 days, 6 records)
+5. CSR5 - all small square recordings and big square (3 days, 6 records)
 6. CSR6 - all small square recordings and late habituation (6 days)
 
 Lesion:
