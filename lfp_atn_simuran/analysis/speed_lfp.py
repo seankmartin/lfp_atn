@@ -150,6 +150,7 @@ def speed_vs_amp(self, lfp_signal, low_f, high_f, filter_kwargs=None, **kwargs):
     # )
     ax.set_xlim(t.min(), t.max())
     ax.set_ylim(0, 30)
+    simuran.despine()
 
     plt.colorbar(pcm, ax=ax, use_gridspec=True)
 
@@ -166,7 +167,6 @@ def speed_vs_amp(self, lfp_signal, low_f, high_f, filter_kwargs=None, **kwargs):
     )
     # ax2.set_ylabel("Speed (cm / s)")
     # ax2.set_ylim(0, np.max(avg_speed))
-    simuran.despine()
 
     pd_df = list_to_df(
         [avg_speed, lfp_amplitudes], transpose=True, headers=["Speed", "LFP amplitude"]
