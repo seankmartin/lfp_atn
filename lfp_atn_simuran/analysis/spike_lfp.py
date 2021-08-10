@@ -44,18 +44,22 @@ def plot_phase(graph_data):
 
 def spike_lfp_headings():
     headers = [
+        "Mean_Phase_SUB",
+        "Mean_Phase_Count_SUB",
+        "Resultant_Phase_Vector_SUB",
+        "Phase_Vector_95_SUB",
+        "Mean_Phase_RSC",
+        "Mean_Phase_Count_RSC",
+        "Resultant_Phase_Vector_RSC",
+        "Phase_Vector_95_RSC",
         "STA_SUB",
         "SFC_SUB",
         "STA_RSC",
         "SFC_RSC",
         "Time",
         "Frequency",
-        "Mean_Phase_SUB",
-        "Mean_Phase_Count_SUB",
-        "Resultant_Phase_Vector_SUB",
-        "Mean_Phase_RSC",
-        "Mean_Phase_Count_RSC",
-        "Resultant_Phase_Vector_RSC",
+        "RandomSFC_SUB",
+        "RandomSFC_RSC",
     ]
     return headers
 
@@ -134,8 +138,11 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
             mean_phase = nc_sig.get_results()["LFP Spike Mean Phase"]
             phase_count = nc_sig.get_results()["LFP Spike Mean Phase Count"]
             spike_phase_vect = nc_sig.get_results()["LFP Spike Phase Res Vect"]
+            os.makedirs(os.path.join(output_dir, "spike_phase_plots"), exist_ok=True)
             name = os.path.join(
-                output_dir, f"{name_start}_{name_for_save}_SUB_Phase.{fmt}"
+                output_dir,
+                "spike_phase_plots",
+                f"{name_start}_{name_for_save}_SUB_Phase.{fmt}",
             )
             fig = plot_phase(g_data)
             fig.savefig(name, dpi=400)
@@ -146,25 +153,60 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
             phase_count2 = nc_sig2.get_results()["LFP Spike Mean Phase Count"]
             spike_phase_vect2 = nc_sig2.get_results()["LFP Spike Phase Res Vect"]
             name = os.path.join(
-                output_dir, f"{name_start}_{name_for_save}_RSC_Phase.{fmt}"
+                output_dir,
+                "spike_phase_plots",
+                f"{name_start}_{name_for_save}_RSC_Phase.{fmt}",
             )
             fig = plot_phase(g_data)
             fig.savefig(name, dpi=400)
             plt.close(fig)
 
+            # Spike shuffling
+            number_of_shuffles = kwargs.get("number_of_shuffles_sta", 500)
+            shuffled_times = unit.underlying.shuffle_spike_times(
+                number_of_shuffles, None
+            )
+            shuffle_sfc_sub = np.zeros(shape=(number_of_shuffles, len(sfc)))
+            shuffle_sfc_rsc = np.zeros(shape=(number_of_shuffles, len(sfc)))
+            spike_phase_vects = np.zeros(number_of_shuffles)
+            spike_phase_vects_rsc = np.zeros(number_of_shuffles)
+            for i in range(number_of_shuffles):
+                spike_times = shuffled_times[i]
+                g_data = nc_sig.plv(spike_times, mode="bs", fwin=[0, 20], nrep=50)
+                sfc_sub = g_data["SFCm"]
+                shuffle_sfc_sub[i] = sfc_sub
+                g_data = nc_sig2.plv(spike_times, mode="bs", fwin=[0, 20], nrep=50)
+                sfc_rsc = g_data["SFCm"]
+                shuffle_sfc_rsc[i] = sfc_rsc
+
+                nc_sig.phase_dist(spike_train, fwin=fwin)
+                spike_phase_vects[i] = nc_sig.get_results()["LFP Spike Phase Res Vect"]
+
+                nc_sig2.phase_dist(spike_train, fwin=fwin)
+                spike_phase_vects_rsc[i] = nc_sig2.get_results()[
+                    "LFP Spike Phase Res Vect"
+                ]
+
+            spike_phase_vect_sub_ci = np.percentile(spike_phase_vects, 95)
+            spike_phase_vect_rsc_ci = np.percentile(spike_phase_vects_rsc, 95)
+
             output[name_for_save] = [
+                mean_phase,
+                phase_count,
+                spike_phase_vect,
+                spike_phase_vect_sub_ci,
+                mean_phase2,
+                phase_count2,
+                spike_phase_vect2,
+                spike_phase_vect_rsc_ci,
                 sta,
                 sfc,
                 sta_rsc,
                 sfc_rsc,
                 t,
                 f,
-                mean_phase,
-                phase_count,
-                spike_phase_vect,
-                mean_phase2,
-                phase_count2,
-                spike_phase_vect2,
+                shuffle_sfc_sub,
+                shuffle_sfc_rsc,
             ]
             unit.underlying.reset_results()
 
@@ -176,8 +218,7 @@ def combine_results(info, extra, **kwargs):
     import simuran
     import seaborn as sns
 
-    cfg = simuran.parse_config()
-    base_dir = cfg.get("cfg_base_dir")
+    base_dir = kwargs.get("cfg_base_dir")
 
     out_dir, filename = extra
     base, ext = os.path.splitext(os.path.basename(filename))
@@ -204,9 +245,11 @@ def combine_results(info, extra, **kwargs):
             if out_region == "sub":
                 sta = row.STA_SUB
                 sfc = row.SFC_SUB
+                random = row.RandomSFC_SUB
             else:
                 sta = row.STA_RSC
                 sfc = row.SFC_RSC
+                random = row.RandomSFC_RSC
             t = row.Time
             f = row.Frequency
 
@@ -225,10 +268,18 @@ def combine_results(info, extra, **kwargs):
             for i in range(len(sta)):
                 new_list1.append([group, float(sta[i]), float(t[i]), spatial])
             for i in range(len(sfc)):
-                new_list2.append([group, float(sfc[i]) / 100, float(f[i]), spatial])
+                new_list2.append(
+                    [
+                        group,
+                        float(sfc[i]) / 100,
+                        float(random[i]) / 100,
+                        float(f[i]),
+                        spatial,
+                    ]
+                )
 
         headers1 = ["Group", "STA", "Time (s)", "Spatial"]
-        headers2 = ["Group", "SFC", "Frequency (Hz)", "Spatial"]
+        headers2 = ["Group", "SFC", "Shuffled SFC", "Frequency (Hz)", "Spatial"]
         df1 = list_to_df(new_list1, headers=headers1)
         df2 = list_to_df(new_list2, headers=headers2)
 
@@ -250,6 +301,20 @@ def combine_results(info, extra, **kwargs):
         )
         ax.set_ylabel("Spike field coherence")
         name = f"average_sfc_{out_region}"
+        fig.savefig(os.path.join(out_dir, name + "." + "pdf"))
+        plt.close(fig)
+
+        fig, ax = plt.subplots()
+        sns.lineplot(
+            data=df2,
+            x="Frequency (Hz)",
+            y="Shuffled SFC",
+            ax=ax,
+            style="Group",
+            hue="Spatial",
+        )
+        ax.set_ylabel("Spike field coherence")
+        name = f"average_sfc_shuffled_{out_region}"
         fig.savefig(os.path.join(out_dir, name + "." + "pdf"))
         plt.close(fig)
 

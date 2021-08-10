@@ -21,5 +21,8 @@ params = {
     "image_format": "png",
 
     # Path setup
-    "cfg_base_dir" : r"D:\SubRet_recordings_imaging"
+    "cfg_base_dir" : r"D:\SubRet_recordings_imaging",
+
+    # STA
+    "number_of_shuffles_sta": 100
 }
