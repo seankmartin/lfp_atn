@@ -223,7 +223,7 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
             hue="Group",
             multiple="stack",
             # element="step",
-            ax=ax
+            ax=ax,
         )
         simuran.despine()
         out_name = os.path.join(out_dir, "summary", name + f"--foof--{r}combined.pdf")

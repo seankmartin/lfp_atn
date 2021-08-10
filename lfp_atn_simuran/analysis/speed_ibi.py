@@ -213,7 +213,7 @@ def recording_speed_ibi(recording, out_dir, base_dir, **kwargs):
             out_name_end = recording.get_name_for_save(base_dir)
             out_name_end += "_T{}_SS{}".format(out_str_start, str(cell))
             out_name = os.path.join(out_dir, out_name_end) + img_format
-            
+
             fig.savefig(out_name, dpi=400)
             plt.close(fig)
 
@@ -222,6 +222,7 @@ def recording_speed_ibi(recording, out_dir, base_dir, **kwargs):
             unit.underlying.reset_results()
 
     return output
+
 
 def vis_speed_ibi(df, out_dir=None):
     simuran.set_plot_style()
@@ -232,7 +233,7 @@ def vis_speed_ibi(df, out_dir=None):
     )
     simuran.despine()
     out_name = os.path.join(out_dir, "..", "summary", "Speed_IBIR.pdf")
-    fig.savefig(out_name, dpi=400)#
+    fig.savefig(out_name, dpi=400)  #
     plt.close(fig)
 
     fig, ax = plt.subplots()
@@ -280,7 +281,7 @@ def combine_results(info, extra_info, **kwargs):
             raise RuntimeError("Incorrect parsing")
         new_list.append(spatial)
         new_list2.append(group)
-    
+
     info["Spatial"] = new_list
     info["Group"] = new_list2
 

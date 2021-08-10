@@ -140,14 +140,14 @@ def z_score_signals(signals, z_threshold=1.1, verbose=False, clean=True):
                 )
     else:
         bad_idx = []
-    
+
     for i in range(len(signals_)):
         if i not in bad_idx:
             div = np.std(signals_[i])
             div = np.where(div == 0, 1, div)
             signals_[i] = (signals_[i] - np.mean(signals_[i])) / div
     res = np.mean(signals_, axis=0)
-    
+
     # Technically, the signals are now dimensionless
     # Including unit for compatibability
     if hasattr(signals[0], "unit"):
