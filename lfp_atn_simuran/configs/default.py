@@ -24,5 +24,5 @@ params = {
     "cfg_base_dir" : r"D:\SubRet_recordings_imaging",
 
     # STA
-    "number_of_shuffles_sta": 100
+    "number_of_shuffles_sta": 5
 }

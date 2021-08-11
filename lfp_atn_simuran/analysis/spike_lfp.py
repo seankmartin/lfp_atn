@@ -163,19 +163,20 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
 
             # Spike shuffling
             number_of_shuffles = kwargs.get("number_of_shuffles_sta", 500)
-            shuffled_times = unit.underlying.shuffle_spike_times(
+            shuffled_times = unit.underlying.shift_spike_times(
                 number_of_shuffles, None
             )
             shuffle_sfc_sub = np.zeros(shape=(number_of_shuffles, len(sfc)))
             shuffle_sfc_rsc = np.zeros(shape=(number_of_shuffles, len(sfc)))
             spike_phase_vects = np.zeros(number_of_shuffles)
             spike_phase_vects_rsc = np.zeros(number_of_shuffles)
+            import time
             for i in range(number_of_shuffles):
                 spike_times = shuffled_times[i]
-                g_data = nc_sig.plv(spike_times, mode="bs", fwin=[0, 20], nrep=50)
+                g_data = nc_sig.plv(spike_times, mode="bs", fwin=[0, 20], nrep=20)
                 sfc_sub = g_data["SFCm"]
                 shuffle_sfc_sub[i] = sfc_sub
-                g_data = nc_sig2.plv(spike_times, mode="bs", fwin=[0, 20], nrep=50)
+                g_data = nc_sig2.plv(spike_times, mode="bs", fwin=[0, 20], nrep=20)
                 sfc_rsc = g_data["SFCm"]
                 shuffle_sfc_rsc[i] = sfc_rsc
 
@@ -219,6 +220,7 @@ def combine_results(info, extra, **kwargs):
     import seaborn as sns
 
     base_dir = kwargs.get("cfg_base_dir")
+    print(base_dir)
 
     out_dir, filename = extra
     base, ext = os.path.splitext(os.path.basename(filename))
@@ -245,11 +247,11 @@ def combine_results(info, extra, **kwargs):
             if out_region == "sub":
                 sta = row.STA_SUB
                 sfc = row.SFC_SUB
-                random = row.RandomSFC_SUB
+                random = np.mean(row.RandomSFC_SUB, axis=0)
             else:
                 sta = row.STA_RSC
                 sfc = row.SFC_RSC
-                random = row.RandomSFC_RSC
+                random = np.mean(row.RandomSFC_RSC, axis=0)
             t = row.Time
             f = row.Frequency
 
