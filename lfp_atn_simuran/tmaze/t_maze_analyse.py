@@ -1,5 +1,4 @@
 import os
-from site import addsitedir
 from math import floor, ceil
 from pprint import pprint
 
@@ -24,10 +23,6 @@ except ImportError:
     do_analysis = False
 
 from neuronal.decoding import LFPDecoder
-
-lib_folder = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-addsitedir(lib_folder)
-from lib.plots import plot_pos_over_time
 
 here = os.path.dirname(os.path.abspath(__file__))
 
