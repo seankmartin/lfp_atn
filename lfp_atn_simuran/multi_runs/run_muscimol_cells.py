@@ -21,7 +21,7 @@ can1_09 = os.path.join(main_dir, "CanCSCa1_muscimol", "09082018")
 directory_list = [
     can8_05,
     can8_05,
-#    can8_05,
+    #    can8_05,
     can8_05,
     can8_12,
     can8_12,
@@ -30,13 +30,13 @@ directory_list = [
     can7_03,
     can7_03,
     can7_03,
-    can1_09
+    can1_09,
 ]
 
 param_list = [
     make_default_dict("_3_3"),
     make_default_dict("_11_6"),
-#    make_default_dict("_9_5"),
+    #    make_default_dict("_9_5"),
     make_default_dict("_3_2"),
     make_default_dict("_10_2"),
     make_default_dict("_10_1"),
@@ -49,8 +49,7 @@ param_list = [
 ]
 
 if len(param_list) != len(directory_list):
-    raise ValueError(
-        "Parameter list and directory list must be the same length")
+    raise ValueError("Parameter list and directory list must be the same length")
 
 default_param_folder = os.path.join(main_dir, "simuran_default")
 check_params = False

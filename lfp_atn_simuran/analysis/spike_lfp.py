@@ -170,7 +170,6 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
             shuffle_sfc_rsc = np.zeros(shape=(number_of_shuffles, len(sfc)))
             spike_phase_vects = np.zeros(number_of_shuffles)
             spike_phase_vects_rsc = np.zeros(number_of_shuffles)
-            import time
             for i in range(number_of_shuffles):
                 spike_times = shuffled_times[i]
                 g_data = nc_sig.plv(spike_times, mode="bs", fwin=[0, 20], nrep=20)
