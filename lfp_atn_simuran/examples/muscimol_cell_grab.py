@@ -35,9 +35,9 @@ def main(start_dir, map_file):
 
     # Fill in the mappings
     mapping_dict = {
-        "CanCSCa1": "CanCSCa",
-        "CanCSR7": "CanCSR",
-        "CanCSR8": "CanCSR",
+        "CanCSCa1": "CanCSCa.py",
+        "CanCSR7": "CanCSR.py",
+        "CanCSR8": "CanCSR.py",
     }
     def mapping_from_row(row):
         animal_name = row["Directory"][len(start_dir+os.sep):].split("_")[0]
