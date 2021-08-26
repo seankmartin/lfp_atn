@@ -107,7 +107,7 @@ def main(
     groups = []
     choices = []
     skip = (os.path.exists(decoding_loc)) and (not overwrite) and (not do_coherence)
-    if os.path.exists(decoding_loc):
+    if skip:
         with open(decoding_loc, "r") as f:
             csvreader = csv.reader(f, delimiter=",")
             for i, row in enumerate(csvreader):
@@ -282,7 +282,7 @@ def main(
                     if do_coherence:
                         for f_, cxy_ in zip(f, Cxy):
                             coherence_df_list.append(
-                                (f_, cxy_, r.passed, group, r.test, r.session)
+                                (f_, cxy_, r.passed.strip(), group, r.test, r.session)
                             )
 
                 # For decoding
