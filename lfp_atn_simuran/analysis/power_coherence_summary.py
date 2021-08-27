@@ -294,7 +294,7 @@ def plot_all_lfp(info, out_dir, name, **kwargs):
 
     print("Saving plots to {}".format(out_dir))
     os.makedirs(os.path.join(out_dir, "summary"), exist_ok=True)
-    plt.savefig(os.path.join(out_dir, "summary", name + "--coherence_ci.pdf"), dpi=400)
+    plt.savefig(os.path.join(out_dir, "summary", name + "_ci.pdf"), dpi=400)
     plt.close("all")
 
     sns.lineplot(
@@ -306,6 +306,7 @@ def plot_all_lfp(info, out_dir, name, **kwargs):
         estimator=np.median,
         ci=None,
     )
+    plt.ylim(0, 1)
 
     simuran.despine()
 
@@ -313,12 +314,12 @@ def plot_all_lfp(info, out_dir, name, **kwargs):
     plt.ylabel("Coherence")
 
     print("Saving plots to {}".format(out_dir))
-    plt.savefig(os.path.join(out_dir, "summary", name + "--coherence.pdf"), dpi=400)
+    plt.savefig(os.path.join(out_dir, "summary", name + ".pdf"), dpi=400)
 
     plt.ylim(0, 1)
 
     plt.savefig(
-        os.path.join(out_dir, "summary", name + "--coherence_full.pdf"), dpi=400
+        os.path.join(out_dir, "summary", name + "_full.pdf"), dpi=400
     )
     plt.close("all")
 
