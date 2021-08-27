@@ -106,7 +106,15 @@ def main(
     new_lfp = np.zeros(shape=(num_rows // 2, 2, lfp_len))
     groups = []
     choices = []
-    skip = (os.path.exists(decoding_loc)) and (not overwrite) and (not do_coherence)
+    oname_coherence = os.path.join(
+        here, "..", "sim_results", "tmaze", "coherence_full.csv"
+    )
+    os.makedirs(os.path.dirname(oname_coherence), exist_ok=True)
+    skip = (
+        (os.path.exists(decoding_loc))
+        and (not overwrite)
+        and (os.path.exists(oname_coherence))
+    )
     if skip:
         with open(decoding_loc, "r") as f:
             csvreader = csv.reader(f, delimiter=",")
@@ -118,6 +126,8 @@ def main(
                 new_lfp[i, 1] = np.array(
                     [float(v) for v in vals[lfp_len : 2 * (lfp_len)]]
                 )
+        coherence_df = df_from_file(oname_coherence)
+        print(coherence_df)
 
     ## Extract LFP, do coherence, and plot
     # TODO split the decoding and the coherence into two different parts.
@@ -307,7 +317,7 @@ def main(
                 fig.savefig(figname, dpi=400)
                 plt.close(fig)
 
-    if do_coherence:
+    if do_coherence and not skip:
         # Save the results
         headers = [
             "location",
@@ -327,22 +337,52 @@ def main(
 
         res_df = pd.DataFrame(results, columns=headers)
 
-        split = os.path.splitext(excel_location)
-        out_name = split[0] + "_results" + split[1]
+        split = os.path.splitext(os.path.basename(excel_location))
+        out_name = os.path.join(
+            here, "..", "sim_results", "tmaze", split[0] + "_results" + split[1]
+        )
         df_to_file(res_df, out_name, index=False)
 
         # Plot difference between pass and fail trials
-        headers = ["Frequency (Hz)", "Coherence", "Choice", "Group", "Test", "Session"]
-        df = list_to_df(coherence_df_list, headers=headers)
+        headers = ["Frequency (Hz)", "Coherence", "Passed", "Group", "Test", "Session"]
+        coherence_df = list_to_df(coherence_df_list, headers=headers)
 
-        df = df[df["Test"] == "second"]
+        df_to_file(coherence_df, oname_coherence, index=False)
+
+    if do_coherence or skip:
+        # coherence_df = coherence_df[coherence_df["Test"] == "second"]
+        simuran.set_plot_style()
+        sns.lineplot(
+            data=coherence_df,
+            x="Frequency (Hz)",
+            y="Coherence",
+            hue="Group",
+            style="Passed",
+            ci=None,
+            estimator=np.median,
+        )
+        plt.ylim(0, 1)
+        simuran.despine()
+        plt.savefig(
+            os.path.join(here, "..", "sim_results", "tmaze", "coherence.pdf"), dpi=400
+        )
+        plt.close("all")
 
         sns.lineplot(
-            data=df, x="Frequency (Hz)", y="Coherence", hue="Group", style="Choice"
+            data=coherence_df,
+            x="Frequency (Hz)",
+            y="Coherence",
+            hue="Group",
+            style="Passed",
+            ci=95,
+            estimator=np.median,
         )
+        plt.ylim(0, 1)
+        simuran.despine()
         plt.savefig(
-            os.path.join(os.path.dirname(excel_location), "coherence.pdf"), dpi=400
+            os.path.join(here, "..", "sim_results", "tmaze", "coherence_ci.pdf"), dpi=400
         )
+        plt.close("all")
 
     # Try to decode pass and fail trials.
     # TODO save the information for decoding for further use.
@@ -377,7 +417,7 @@ if __name__ == "__main__":
 
     main_plot_individual_sessions = False
     main_do_coherence = True
-    main_do_decoding = True
+    main_do_decoding = False
 
     main_overwrite = False
     main(
