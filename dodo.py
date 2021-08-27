@@ -24,7 +24,7 @@ def task_list_openfield():
         os.path.join(here, "lfp_atn_simuran", "multi_runs", "run_openfield.py"),
         ["fn_list_recordings.py", "lfp_clean.py"],
         reason="List the recordings that are analysed in openfield.",
-        **kwargs
+        **kwargs,
     )
 
 
@@ -37,13 +37,13 @@ def task_coherence():
     )
 
 
-def task_lfp_plot():
-    return create_task(
-        os.path.join(here, "lfp_atn_simuran", "multi_runs", "run_lfp_plot.py"),
-        ["fn_plot_lfp.py", "lfp_clean.py"],
-        reason="Plot first 100s of each recording in openfield for LFP inspection.",
-        **kwargs,
-    )
+# def task_lfp_plot():
+#     return create_task(
+#         os.path.join(here, "lfp_atn_simuran", "multi_runs", "run_lfp_plot.py"),
+#         ["fn_plot_lfp.py", "lfp_clean.py"],
+#         reason="Plot first 100s of each recording in openfield for LFP inspection.",
+#         **kwargs,
+#     )
 
 
 def task_lfp_power():
@@ -55,13 +55,13 @@ def task_lfp_power():
     )
 
 
-def task_lfp_rate():
-    return create_task(
-        os.path.join(here, "lfp_atn_simuran", "multi_runs", "run_lfp_rate.py"),
-        ["fn_lfp_rate.py", "lfp_clean.py"],
-        reason="Rate maps of LFP (like a firing map, but with LFP amplitude).",
-        **kwargs,
-    )
+# def task_lfp_rate():
+#     return create_task(
+#         os.path.join(here, "lfp_atn_simuran", "multi_runs", "run_lfp_rate.py"),
+#         ["fn_lfp_rate.py", "lfp_clean.py"],
+#         reason="Rate maps of LFP (like a firing map, but with LFP amplitude).",
+#         **kwargs,
+#     )
 
 
 def task_lfp_speed():
@@ -81,6 +81,7 @@ def task_speed_ibi():
         **kwargs,
     )
 
+
 def task_spike_lfp():
     return create_list_task(
         os.path.join(here, "lfp_atn_simuran", "multi_runs", "run_spike_lfp.py"),
@@ -88,6 +89,7 @@ def task_spike_lfp():
         reason="Spike to LFP relationship.",
         **kwargs,
     )
+
 
 def task_tmaze():
     base_ = os.path.join(here, "lfp_atn_simuran", "tmaze")
@@ -109,3 +111,14 @@ def task_tmaze():
         "verbosity": 0,
         "doc": action,
     }
+
+
+def task_muscimol_sta():
+    return create_list_task(
+        os.path.join(
+            here, "lfp_atn_simuran", "multi_runs", "run_spike_lfp_muscimol.py"
+        ),
+        ["spike_lfp.py", "lfp_clean.py"],
+        reason="Spike to LFP relationship in muscimol data.",
+        **kwargs,
+    )
