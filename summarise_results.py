@@ -1,8 +1,10 @@
 import dodo
 import os
+import shutil
 
 from skm_pyutils.py_table import df_from_file
 from skm_pyutils.py_pdf import pdf_cat
+from skm_pyutils.py_config import read_cfg
 
 here = os.path.dirname(os.path.abspath(__file__))
 output_location = os.path.join(here, "results.txt")
@@ -166,9 +168,48 @@ def main():
         describe_task(task, id_.get(task, {}), all_files)
     out_file.close()
 
+    out_loc_merge = os.path.join(results_dir, "merged_results")
+    os.makedirs(out_loc_merge, exist_ok=True)
     pdf_files = [fname for fname in all_files if os.path.splitext(fname)[-1] == ".pdf"]
-    pdf_merge_loc = os.path.join(results_dir, "merged_results.pdf")
+
+    pdf_merge_loc = os.path.join(out_loc_merge, "merged_results.pdf")
     pdf_cat(pdf_files, pdf_merge_loc)
+
+    here = os.path.dirname(os.path.abspath(__file__))
+    cfg = read_cfg(os.path.join(here, "dodo.cfg"), verbose=False)
+    dirname = cfg.get("DEFAULT", "dirname")
+    for f in all_files:
+        out_loc_merge_file = os.path.join(out_loc_merge, os.path.basename(f))
+        if os.path.splitext(out_loc_merge_file)[-1] == ".csv":
+            with open(f, "r") as file:
+                lines = file.readlines()
+                l1 = lines[0]
+                out_str = l1.strip() + ",Condition\n"
+                for line in lines[1:]:
+                    if (
+                        line.startswith("Average")
+                        or line.startswith("Std")
+                        or line == l1
+                        or line == "\n"
+                    ):
+                        continue
+                    else:
+                        fpath = line.split(",")[0]
+                        fpath_without_base = fpath[len(dirname + os.sep) :]
+                        if fpath_without_base.startswith("C"):
+                            condition = "Control"
+                        elif fpath_without_base.startswith("L"):
+                            condition = "Lesion"
+                        elif fpath_without_base.startswith("m"):
+                            condition = "Muscimol"
+                        else:
+                            condition = "Unkown"
+                        out_str += line.strip() + f",{condition}\n"
+            with open(out_loc_merge_file, "w") as file:
+                file.write(out_str)
+        else:
+            shutil.copy(f, out_loc_merge_file)
+
 
 if __name__ == "__main__":
     main()
