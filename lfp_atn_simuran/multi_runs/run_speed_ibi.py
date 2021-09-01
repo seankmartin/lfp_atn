@@ -14,7 +14,7 @@ this_dirname = "__thisdirname__"
 
 # The path to the cell list location
 cell_list_path = os.path.abspath(
-    os.path.join(this_dirname, "..", "cell_lists", "CTRL_Lesion_cells_filled.xlsx")
+    os.path.join(this_dirname, "..", "cell_lists", "CTRL_Lesion_cells_filled.csv")
 )
 
 # The function to run on each recording in the cell list

@@ -132,6 +132,7 @@ def recording_ibi_headings():
         "Median speed",
         "Mean speed",
         "Median IBI",
+        "Median IBI Speed",
         "Mean firing rate",
     ]
 
@@ -205,8 +206,12 @@ def recording_speed_ibi(recording, out_dir, base_dir, **kwargs):
             op[4] = res["lin_fit_p"]
             op[5] = np.median(np.array(spatial.get_speed()))
             op[6] = np.mean(np.array(spatial.get_speed()))
-            op[7] = np.median(np.diff(spike_train))
-            op[8] = len(spike_train) / unit.underlying.get_duration()
+
+            if ibi_df is not None:
+                op[7]= ibi_df["IBI"].median()
+                op[8]= ibi_df["Speed"].median()
+                
+            op[9] = len(spike_train) / unit.underlying.get_duration()
 
             simuran.despine()
             plt.tight_layout()
@@ -249,7 +254,7 @@ def vis_speed_ibi(df, out_dir=None):
 def combine_results(info, extra_info, **kwargs):
     here = os.path.dirname(os.path.abspath(__file__))
     cell_list_location = os.path.join(
-        here, "..", "cell_lists", "CTRL_Lesion_cells_filled_eeg.xlsx"
+        here, "..", "cell_lists", "CTRL_Lesion_cells_filled_eeg.csv"
     )
     df = pd.read_excel(cell_list_location)
 
@@ -289,7 +294,7 @@ def combine_results(info, extra_info, **kwargs):
 
 
 if __name__ == "__main__":
-    location = r"E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\list_spike_ibi\CTRL_Lesion_cells_filled_spike_ibi_and_locking_results.xlsx"
+    location = r"E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\list_spike_ibi\CTRL_Lesion_cells_filled_spike_ibi_and_locking_results.csv"
 
     df = pd.read_excel(location)
     vis_speed_ibi(df)
