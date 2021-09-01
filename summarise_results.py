@@ -99,7 +99,7 @@ def main():
         os.path.join(
             results_dir,
             "spike_ibi",
-            "CTRL_Lesion_cells_filled_recording_speed_ibi_results.xlsx",
+            "CTRL_Lesion_cells_filled_recording_speed_ibi_results.csv",
         )
     ]
     fig_list = [os.path.join(summary_location, "Speed_IBI_Median.pdf")]
@@ -110,12 +110,12 @@ def main():
         os.path.join(
             results_dir,
             "spike_lfp",
-            "CTRL_Lesion_cells_filled_eeg_recording_spike_lfp_results.xlsx",
+            "CTRL_Lesion_cells_filled_eeg_recording_spike_lfp_results.csv",
         ),
         os.path.join(
             results_dir,
             "spike_lfp",
-            "CTRL_Lesion_cells_filled_eeg__sfc_sub.xlsx",
+            "CTRL_Lesion_cells_filled_eeg__sfc_sub.csv",
         ),
     ]
     fig_list = [
