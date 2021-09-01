@@ -42,6 +42,8 @@ def compare_lfp(
     # Do the actual calculation
     if ch_to_use == "all":
         ch_labels = recording.get_signal_channels()
+    else:
+        ch_labels = ch_to_use
     ch = [i for i in range(len(ch_labels))]
 
     grid = np.meshgrid(ch, ch, indexing="ij")
@@ -95,7 +97,7 @@ def compare_lfp(
 
     regions = recording.signals.get_property("region")
     results = np.reshape(result_a, newshape=[len(ch), len(ch)])
-    results_dict = {"sub_diff": 0, "rsc_diff": 0}
+    results_dict = {"sub_diff": float(0), "rsc_diff": float(0)}
     sub_count, rsc_count = 0, 0
     current = "START"
     for i in range(len(regions)):
@@ -108,8 +110,8 @@ def compare_lfp(
             if current == "START":
                 current = "MIDDLE"
 
-    results_dict["sub_diff"] = np.mean(results[:rsc_count, :rsc_count])
-    results_dict["rsc_diff"] = np.mean(results[rsc_count:, rsc_count:])
+    results_dict["sub_diff"] = float(np.mean(results[:rsc_count, :rsc_count]))
+    results_dict["rsc_diff"] = float(np.mean(results[rsc_count:, rsc_count:]))
 
     return {"full": result_a, "summary": results_dict}
 
@@ -117,12 +119,10 @@ def compare_lfp(
 def average_difference(recording_container, figures, plot=False, fmt="png"):
     results_list = [r["compare_lfp"]["full"] for r in recording_container.get_results()]
     save_name = os.path.basename(recording_container.base_dir)
-    results = None
     ch = [i for i in range(len(recording_container[0].get_signal_channels()))]
 
+    results = np.zeros(results_list[0].shape)
     for result_a in results_list:
-        if results is None:
-            results = np.zeros(result_a.shape)
         results = results + result_a
     results = results / len(results_list)
     results = np.reshape(results, newshape=[len(ch), len(ch)])

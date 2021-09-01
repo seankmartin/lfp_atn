@@ -2,11 +2,9 @@ import os
 
 import numpy as np
 from scipy.signal import coherence
-from scipy.signal import welch
 import matplotlib.pyplot as plt
 import seaborn as sns
 import simuran
-import astropy.units as u
 
 from lfp_atn_simuran.analysis.lfp_clean import LFPClean
 

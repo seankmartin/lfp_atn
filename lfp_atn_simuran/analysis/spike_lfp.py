@@ -3,7 +3,6 @@ import os
 
 import simuran
 import numpy as np
-import pandas as pd
 
 from lfp_atn_simuran.analysis.lfp_clean import LFPClean
 from skm_pyutils.py_table import list_to_df, df_from_file, df_to_file

@@ -239,8 +239,6 @@ def plot_all_lfp(info, out_dir, name, **kwargs):
     import simuran
     import matplotlib.pyplot as plt
 
-    from neurochat.nc_utils import smooth_1d
-
     os.makedirs(out_dir, exist_ok=True)
 
     simuran.set_plot_style()
@@ -248,6 +246,7 @@ def plot_all_lfp(info, out_dir, name, **kwargs):
     parsed_info = []
     control_data = []
     lesion_data = []
+    x_data = []
     for item in info:
         for val in item:
             # l1 = freq, l2 - coherence, l3 - group

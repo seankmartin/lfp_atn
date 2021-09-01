@@ -1,11 +1,6 @@
 import os
-import math
-
-import numpy as np
-import matplotlib.pyplot as plt
 
 from simuran.plot.figure import SimuranFigure
-from neurochat.nc_utils import butter_filter
 from lfp_atn_simuran.analysis.lfp_clean import LFPClean
 
 

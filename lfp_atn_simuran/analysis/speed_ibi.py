@@ -8,7 +8,7 @@ import simuran
 import scipy.stats
 import seaborn as sns
 import pandas as pd
-from skm_pyutils.py_table import list_to_df
+from skm_pyutils.py_table import list_to_df, df_from_file
 
 
 # 1. Compare speed and firing rate
@@ -178,6 +178,8 @@ def recording_speed_ibi(recording, out_dir, base_dir, **kwargs):
         no_data_loaded = unit.underlying is None
         if not no_data_loaded:
             available_units = unit.underlying.get_unit_list()
+        else:
+            available_units = []
 
         for cell in to_analyse:
             name_for_save = out_str_start + "_" + str(cell)
@@ -205,11 +207,11 @@ def recording_speed_ibi(recording, out_dir, base_dir, **kwargs):
             op[3] = res["lin_fit_r"]
             op[4] = res["lin_fit_p"]
             op[5] = np.median(np.array(spatial.get_speed()))
-            op[6] = np.mean(np.array(spatial.get_speed()))
+            op[6] = float(np.mean(np.array(spatial.get_speed())))
 
             if ibi_df is not None:
-                op[7]= ibi_df["IBI"].median()
-                op[8]= ibi_df["Speed"].median()
+                op[7] = ibi_df["IBI"].median()
+                op[8] = ibi_df["Speed"].median()
                 
             op[9] = len(spike_train) / unit.underlying.get_duration()
 
@@ -256,10 +258,10 @@ def combine_results(info, extra_info, **kwargs):
     cell_list_location = os.path.join(
         here, "..", "cell_lists", "CTRL_Lesion_cells_filled_eeg.csv"
     )
-    df = pd.read_excel(cell_list_location)
+    df = df_from_file(cell_list_location)
 
     cfg = simuran.parse_config()
-    base_dir = cfg.get("cfg_base_dir")
+    base_dir = cfg["cfg_base_dir"]
 
     new_list = []
     new_list2 = []

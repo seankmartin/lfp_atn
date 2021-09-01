@@ -1,6 +1,5 @@
 """Clean LFP signals."""
 from collections import OrderedDict
-import logging
 from copy import deepcopy
 
 import numpy as np
@@ -224,11 +223,12 @@ class LFPClean(object):
 
         Returns
         -------
-        dict with keys "signals", "fig", "cleaned", "zscored"
+        dict
+            keys are "signals", "fig", "cleaned", "zscored"
 
         """
         bad_chans = None
-        results = {"signals": None, "fig": None, "cleaned": None, "zscored": None}
+        results = {"signals": {}, "fig": None, "cleaned": None, "zscored": None}
         if method_kwargs is None:
             method_kwargs = {}
         if isinstance(data, simuran.Recording):
@@ -290,7 +290,7 @@ class LFPClean(object):
                 raise ValueError("You must pass the keyword arg channels for pick")
             container = simuran.GenericContainer(signals[0].__class__)
             container.container = [s for s in signals if getattr(s, prop) in channels]
-            result, extra_bad = self.z_score_method(
+            result, extra_bad, _ = self.z_score_method(
                 container, min_f, max_f, clean=True, **filter_kwargs
             )
             bad_chans = [s.channel for s in signals if getattr(s, prop) not in channels]

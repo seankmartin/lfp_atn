@@ -27,6 +27,7 @@ def plot_psd(
     f = f[np.nonzero((f >= fmin) & (f <= fmax))]
     Pxx = Pxx[np.nonzero((f >= fmin) & (f <= fmax))]
 
+    Pxx_max = 0
     ylabel = None
     if scale == "volts":
         micro = UnicodeGrabber.get("micro")
