@@ -12,7 +12,6 @@ tests/*.png
 tests/*.csv
 *sim_results*
 lfp_atn_simuran/examples/results/
-lfp_atn_simuran/tmaze/results/
 lfp_atn_simuran/cell_lists/PDF_results/
 lfp_atn_simuran/cell_lists/Excel_results/
 .smt/
