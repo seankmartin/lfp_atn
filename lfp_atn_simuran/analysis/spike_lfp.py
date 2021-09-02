@@ -230,6 +230,7 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
                 if fwin[0] <= f_val <= fwin[1]:
                     sfc_theta_sub = max(sfc_theta_sub, sfc_val)
 
+            sfc_theta_rsc = None
             if nc_sig2 is not None:
                 for f_val, sfc_val in zip(f, sfc_rsc):
                     sfc_theta_rsc = 0
