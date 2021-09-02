@@ -127,12 +127,13 @@ def main():
 
     ## Tmaze
     df_list = [
-        os.path.join(results_dir, "tmaze", "tmaze-times_results.xlsx"),
+        os.path.join(results_dir, "tmaze", "tmaze-times_results.csv"),
         os.path.join(results_dir, "tmaze", "coherence_full.csv"),
     ]
     fig_list = [
         os.path.join(results_dir, "tmaze", "coherence_ci.pdf"),
         os.path.join(results_dir, "tmaze", "coherence.pdf"),
+        os.path.join(results_dir, "tmaze", "power_ci.pdf"),
     ]
     tmaze_dict = {
         "reason": "T-maze coherence around decision time.",
@@ -180,7 +181,12 @@ def main():
     cfg = read_cfg(os.path.join(here, "dodo.cfg"), verbose=False)
     dirname = cfg.get("DEFAULT", "dirname")
     for f in all_files:
-        out_loc_merge_file = os.path.join(out_loc_merge, os.path.basename(f))
+        base_part = os.path.dirname(f)[len(results_dir + os.sep) :].replace(
+            os.sep, "--"
+        )
+        out_loc_merge_file = os.path.join(
+            out_loc_merge, base_part + "--" + os.path.basename(f)
+        )
         if os.path.splitext(out_loc_merge_file)[-1] == ".csv":
             out_str = ""
             with open(f, "r") as file:
@@ -195,7 +201,10 @@ def main():
                         continue
                     else:
                         fpath = row[0]
-                        fpath_without_base = fpath[len(dirname + os.sep) :]
+                        if "tmaze" in os.path.basename(f):
+                            fpath_without_base = fpath
+                        else:
+                            fpath_without_base = fpath[len(dirname + os.sep) :]
                         if fpath_without_base.startswith("C"):
                             condition = "Control"
                         elif fpath_without_base.startswith("L"):
@@ -204,7 +213,7 @@ def main():
                             condition = "Muscimol"
                         else:
                             condition = "Unkown"
-                        
+
                         for j in range(len(row)):
                             if row[j].startswith("["):
                                 row[j] = "Removed"

@@ -12,12 +12,11 @@ import numpy as np
 from scipy.signal import coherence
 from skm_pyutils.py_table import list_to_df, df_from_file, df_to_file
 import seaborn as sns
+from scipy.signal import welch
 import mne
 
 try:
     from lfp_atn_simuran.analysis.lfp_clean import LFPClean
-    from lfp_atn_simuran.analysis.plot_coherence import plot_recording_coherence
-    from lfp_atn_simuran.analysis.frequency_analysis import powers
 
     do_analysis = True
 except ImportError:
@@ -83,7 +82,7 @@ def main(
     clean_method = cfg["clean_method"]
     clean_kwargs = cfg["clean_kwargs"]
     window_sec = 0.5
-    fmin, fmax = 1, 20
+    fmin, fmax = 0.5, 40
 
     # Don't analyse more than 6 seconds
     max_len = 6
@@ -106,8 +105,12 @@ def main(
     new_lfp = np.zeros(shape=(num_rows // 2, 2, lfp_len))
     groups = []
     choices = []
+    pxx_arr = []
     oname_coherence = os.path.join(
         here, "..", "sim_results", "tmaze", "coherence_full.csv"
+    )
+    oname_power_tmaze = os.path.join(
+        here, "..", "sim_results", "tmaze", "power_tmaze_full.csv"
     )
     os.makedirs(os.path.dirname(oname_coherence), exist_ok=True)
     skip = (
@@ -127,6 +130,7 @@ def main(
                     [float(v) for v in vals[lfp_len : 2 * (lfp_len)]]
                 )
         coherence_df = df_from_file(oname_coherence)
+        power_df = df_from_file(oname_power_tmaze)
 
     ## Extract LFP, do coherence, and plot
     if not skip:
@@ -168,7 +172,8 @@ def main(
 
             # Loop over the two parts of a trial
             # TODO decide if this should just be for the first/final part of the trial
-            for k_, r in enumerate((row1, row2)):
+            # Use (row1, row2 for both parts)
+            for k_, r in enumerate((row2,)):
                 # end or choice could be used
                 # t1, t2 = r.start, r.end
                 t1, t2 = r.start, r.choice
@@ -250,8 +255,6 @@ def main(
                     x = np.array(sub_s.samples[lfpt1:lfpt2].to(u.mV))
                     y = np.array(rsc_s.samples[lfpt1:lfpt2].to(u.mV))
 
-                    fs = sig_dict["SUB"].sampling_rate
-
                     f, Cxy = coherence(x, y, fs, nperseg=window_sec * 250)
                     f = f[np.nonzero((f >= fmin) & (f <= fmax))]
                     Cxy = Cxy[np.nonzero((f >= fmin) & (f <= fmax))]
@@ -292,6 +295,26 @@ def main(
                             coherence_df_list.append(
                                 (f_, cxy_, r.passed.strip(), group, r.test, r.session)
                             )
+
+                        f_welch, Pxx = welch(
+                            x,
+                            fs=fs,
+                            nperseg=window_sec * 250,
+                            return_onesided=True,
+                            scaling="density",
+                            average="mean",
+                        )
+
+                        f_welch = f_welch[
+                            np.nonzero((f_welch >= fmin) & (f_welch <= fmax))
+                        ]
+                        Pxx = Pxx[np.nonzero((f_welch >= fmin) & (f_welch <= fmax))]
+
+                        # Convert to full scale relative dB (so max at 0)
+                        Pxx_max = np.max(Pxx)
+                        Pxx = 10 * np.log10(Pxx / Pxx_max)
+                        for p_val, f_val in zip(Pxx, f_welch):
+                            pxx_arr.append([f_val, p_val, r.passed.strip(), group])
 
                 # For decoding
                 if do_decoding:
@@ -347,6 +370,12 @@ def main(
 
         df_to_file(coherence_df, oname_coherence, index=False)
 
+        power_df = list_to_df(
+            pxx_arr, headers=["Frequency (Hz)", "Power (dB)", "Passed", "Group"]
+        )
+
+        df_to_file(power_df, oname_power_tmaze, index=False)
+
     if do_coherence or skip:
         # coherence_df = coherence_df[coherence_df["Test"] == "second"]
         simuran.set_plot_style()
@@ -383,6 +412,23 @@ def main(
         )
         plt.close("all")
 
+        sns.lineplot(
+            data=power_df,
+            x="Frequency (Hz)",
+            y="Power (dB)",
+            hue="Group",
+            style="Passed",
+            ci=95,
+            estimator=np.median,
+        )
+        plt.xlim(0, 40)
+        simuran.despine()
+        plt.savefig(
+            os.path.join(here, "..", "sim_results", "tmaze", "power_ci.pdf"),
+            dpi=400,
+        )
+        plt.close("all")
+
     # Try to decode pass and fail trials.
     if not os.path.exists(decoding_loc) or overwrite:
         with open(decoding_loc, "w") as f:
@@ -408,7 +454,7 @@ if __name__ == "__main__":
     main_output_location = os.path.join(here, "results")
 
     main_base_dir = r"D:\SubRet_recordings_imaging"
-    main_xls_location = os.path.join(main_output_location, "tmaze-times.xlsx")
+    main_xls_location = os.path.join(main_output_location, "tmaze-times.csv")
 
     cfg_path = os.path.abspath(os.path.join(here, "..", "configs", "default.py"))
     simuran.set_config_path(cfg_path)
@@ -417,7 +463,7 @@ if __name__ == "__main__":
     main_do_coherence = True
     main_do_decoding = False
 
-    main_overwrite = True
+    main_overwrite = False
     main(
         main_xls_location,
         main_base_dir,
