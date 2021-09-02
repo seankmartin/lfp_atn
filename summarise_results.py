@@ -1,6 +1,7 @@
 import dodo
 import os
 import shutil
+import csv
 
 from skm_pyutils.py_table import df_from_file
 from skm_pyutils.py_pdf import pdf_cat
@@ -181,20 +182,19 @@ def main():
     for f in all_files:
         out_loc_merge_file = os.path.join(out_loc_merge, os.path.basename(f))
         if os.path.splitext(out_loc_merge_file)[-1] == ".csv":
+            out_str = ""
             with open(f, "r") as file:
-                lines = file.readlines()
-                l1 = lines[0]
-                out_str = l1.strip() + ",Condition\n"
-                for line in lines[1:]:
-                    if (
-                        line.startswith("Average")
-                        or line.startswith("Std")
-                        or line == l1
-                        or line == "\n"
-                    ):
+                csvreader = csv.reader(file, delimiter=",", quotechar='"')
+                for i, row in enumerate(csvreader):
+                    if i == 0:
+                        l1 = row
+                        out_str += ",".join(row) + ",Condition" + "\n"
+                    elif len(row) == 0:
+                        continue
+                    elif row[0] == "Average" or row[0] == "Std" or row == l1:
                         continue
                     else:
-                        fpath = line.split(",")[0]
+                        fpath = row[0]
                         fpath_without_base = fpath[len(dirname + os.sep) :]
                         if fpath_without_base.startswith("C"):
                             condition = "Control"
@@ -204,9 +204,14 @@ def main():
                             condition = "Muscimol"
                         else:
                             condition = "Unkown"
-                        out_str += line.strip() + f",{condition}\n"
+                        
+                        for j in range(len(row)):
+                            if row[j].startswith("["):
+                                row[j] = "Removed"
+                        out_str += ",".join(row) + f",{condition}\n"
+
             with open(out_loc_merge_file, "w") as file:
-                file.write(out_str)
+                file.write(out_str[:-1])
         else:
             shutil.copy(f, out_loc_merge_file)
 
