@@ -3,21 +3,23 @@ import os
 
 from simuran.main.doit import create_task, create_list_task
 from skm_pyutils.py_config import read_cfg
-from skm_pyutils.py_path import get_all_files_in_dir
 from doit.tools import title_with_actions
 from doit.task import clean_targets
 
 here = os.path.dirname(os.path.abspath(__file__))
 cfg = read_cfg(os.path.join(here, "dodo.cfg"), verbose=False)
-num_workers = cfg.get("DEFAULT", "num_workers")
+num_workers = cfg.getint("DEFAULT", "num_workers")
 dirname = cfg.get("DEFAULT", "dirname")
 main_cfg_path = cfg.get("DEFAULT", "cfg_path")
+overwrite = cfg.getboolean("DEFAULT", "overwrite")
+save = cfg.getboolean("DEFAULT", "save")
 kwargs = {
     "num_workers": num_workers,
     "dirname": dirname,
     "cfg_path": main_cfg_path,
+    "overwrite": overwrite,
+    "save": save
 }
-
 
 def task_list_openfield():
     return create_task(
