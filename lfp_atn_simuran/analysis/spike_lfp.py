@@ -3,12 +3,11 @@ import os
 
 import simuran
 import numpy as np
+import matplotlib.pyplot as plt
 
 from lfp_atn_simuran.analysis.lfp_clean import LFPClean
 from skm_pyutils.py_table import list_to_df, df_from_file, df_to_file
 from skm_pyutils.py_plot import UnicodeGrabber
-
-import matplotlib.pyplot as plt
 
 here = os.path.dirname(os.path.abspath(__file__))
 output_dir = os.path.abspath(os.path.join(here, "..", "sim_results", "spike_lfp"))
@@ -51,6 +50,8 @@ def spike_lfp_headings():
         "Mean_Phase_Count_RSC",
         "Resultant_Phase_Vector_RSC",
         "Phase_Vector_95_RSC",
+        "Theta_SFC_SUB",
+        "Theta_SFC_RSC",
         "STA_SUB",
         "SFC_SUB",
         "STA_RSC",
@@ -59,6 +60,7 @@ def spike_lfp_headings():
         "Frequency",
         "RandomSFC_SUB",
         "RandomSFC_RSC",
+        "Spatial",
     ]
     return headers
 
@@ -90,7 +92,7 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
     else:
         nc_sig2 = None
 
-    NUM_RESULTS = 12
+    NUM_RESULTS = len(spike_lfp_headings())
 
     output = {}
     # To avoid overwriting what has been set to analyse
@@ -121,6 +123,15 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
                 continue
             if cell not in available_units:
                 continue
+            
+            spatial = unit.info.get(cell, {})
+            spatial = spatial.get("class", "")
+            if spatial.startswith("S"):
+                spatial = "Spatial"
+            elif spatial.startswith("NS"):
+                spatial = "NS"
+            else:
+                spatial = "Unknown"
 
             unit.underlying.set_unit_no(cell)
             spike_train = unit.underlying.get_unit_stamp()
@@ -214,6 +225,17 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
             else:
                 spike_phase_vect_rsc_ci = None
 
+            for f_val, sfc_val in zip(f, sfc):
+                sfc_theta_sub = 0
+                if fwin[0] <= f_val <= fwin[1]:
+                    sfc_theta_sub = max(sfc_theta_sub, sfc_val)
+
+            if nc_sig2 is not None:
+                for f_val, sfc_val in zip(f, sfc_rsc):
+                    sfc_theta_rsc = 0
+                    if fwin[0] <= f_val <= fwin[1]:
+                        sfc_theta_rsc = max(sfc_theta_rsc, sfc_val)
+
             output[name_for_save] = [
                 mean_phase,
                 phase_count,
@@ -223,6 +245,8 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
                 phase_count2,
                 spike_phase_vect2,
                 spike_phase_vect_rsc_ci,
+                sfc_theta_sub,
+                sfc_theta_rsc,
                 sta,
                 sfc,
                 sta_rsc,
@@ -231,6 +255,7 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
                 f,
                 shuffle_sfc_sub,
                 shuffle_sfc_rsc,
+                spatial
             ]
             unit.underlying.reset_results()
 
@@ -333,8 +358,9 @@ def combine_results(info, extra, **kwargs):
         sns.lineplot(
             data=df1, x="Time (s)", y="STA", ax=ax, style="Group", hue="Spatial"
         )
+        simuran.despine()
         mc = UnicodeGrabber.get("micro")
-        ax.set_ylabel(f"Spike triggered average {mc}V")
+        ax.set_ylabel(f"Spike triggered average ({mc}V)")
         name = f"average_sta_{out_region}"
         fig.savefig(os.path.join(out_dir, name + "." + "pdf"))
         plt.close(fig)
@@ -343,6 +369,7 @@ def combine_results(info, extra, **kwargs):
         sns.lineplot(
             data=df2, x="Frequency (Hz)", y="SFC", ax=ax, style="Group", hue="Spatial"
         )
+        simuran.despine()
         ax.set_ylabel("Spike field coherence")
         name = f"average_sfc_{out_region}"
         fig.savefig(os.path.join(out_dir, name + "." + "pdf"))
@@ -357,6 +384,7 @@ def combine_results(info, extra, **kwargs):
             style="Group",
             hue="Spatial",
         )
+        simuran.despine()
         ax.set_ylabel("Spike field coherence")
         name = f"average_sfc_shuffled_{out_region}"
         fig.savefig(os.path.join(out_dir, name + "." + "pdf"))
