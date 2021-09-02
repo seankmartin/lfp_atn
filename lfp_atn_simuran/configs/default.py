@@ -5,7 +5,8 @@ clean_kwargs = {
 
 params = {
     # Cleaning params
-    "clean_method": "pick",
+    "clean_method": "pick_zscore",
+    # "clean_method": "pick",
     "clean_kwargs": clean_kwargs,
     
     # Filtering params
