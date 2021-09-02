@@ -127,10 +127,8 @@ def main(
                     [float(v) for v in vals[lfp_len : 2 * (lfp_len)]]
                 )
         coherence_df = df_from_file(oname_coherence)
-        print(coherence_df)
 
     ## Extract LFP, do coherence, and plot
-    # TODO split the decoding and the coherence into two different parts.
     if not skip:
         for j in range(num_rows // 2):
             row1 = next(ituples)
@@ -169,7 +167,7 @@ def main(
                 fig, ax = plt.subplots()
 
             # Loop over the two parts of a trial
-            # TODO decide if this should just be for the final part of the trial
+            # TODO decide if this should just be for the first/final part of the trial
             for k_, r in enumerate((row1, row2)):
                 # end or choice could be used
                 # t1, t2 = r.start, r.end
@@ -243,7 +241,6 @@ def main(
                         res_dict["RSC_delta"],
                         res_dict["RSC_theta"],
                     ]
-                    results.append(res_list)
 
                     # Coherence
                     name = os.path.splitext(r.location)[0]
@@ -259,7 +256,7 @@ def main(
                     f = f[np.nonzero((f >= fmin) & (f <= fmax))]
                     Cxy = Cxy[np.nonzero((f >= fmin) & (f <= fmax))]
 
-                    theta_co = Cxy[np.nonzero((f >= theta_min) & (f <= theta_max))]
+                    theta_co = Cxy[np.nonzero((f == 10.0))]
                     delta_co = Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
                     max_theta_coherence = np.amax(theta_co)
                     max_delta_coherence = np.amax(delta_co)
@@ -282,6 +279,7 @@ def main(
 
                     res_list += [max_theta_coherence, max_delta_coherence]
                     res_list += [max_theta_coherence_, max_delta_coherence_]
+                    results.append(res_list)
 
                 if no_pass is False:
                     group = (
@@ -380,12 +378,12 @@ def main(
         plt.ylim(0, 1)
         simuran.despine()
         plt.savefig(
-            os.path.join(here, "..", "sim_results", "tmaze", "coherence_ci.pdf"), dpi=400
+            os.path.join(here, "..", "sim_results", "tmaze", "coherence_ci.pdf"),
+            dpi=400,
         )
         plt.close("all")
 
     # Try to decode pass and fail trials.
-    # TODO save the information for decoding for further use.
     if not os.path.exists(decoding_loc) or overwrite:
         with open(decoding_loc, "w") as f:
             for i in range(len(groups)):
@@ -419,7 +417,7 @@ if __name__ == "__main__":
     main_do_coherence = True
     main_do_decoding = False
 
-    main_overwrite = False
+    main_overwrite = True
     main(
         main_xls_location,
         main_base_dir,
