@@ -18,8 +18,9 @@ kwargs = {
     "dirname": dirname,
     "cfg_path": main_cfg_path,
     "overwrite": overwrite,
-    "save": save
+    "save": save,
 }
+
 
 def task_list_openfield():
     return create_task(
@@ -124,3 +125,24 @@ def task_muscimol_sta():
         reason="Spike to LFP relationship in muscimol data.",
         **kwargs,
     )
+
+
+def task_summarise_results():
+    base_ = here
+    dependencies = [
+        os.path.join(base_, "summarise_results.py"),
+    ]
+    targets = [os.path.join(here, "results.txt")]
+
+    location = os.path.abspath(os.path.join(base_, "summarise_results.py"))
+    action = f"python {location}"
+
+    return {
+        "file_dep": dependencies,
+        "targets": targets,
+        "actions": [action],
+        "clean": [clean_targets],
+        "title": title_with_actions,
+        "verbosity": 0,
+        "doc": action,
+    }
