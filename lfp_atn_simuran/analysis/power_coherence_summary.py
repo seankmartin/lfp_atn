@@ -1,5 +1,6 @@
 def do_coherence(info, extra_info, **kwargs):
     data, fnames = info
+    kwargs["fnames"] = fnames
     out_dir, name = extra_info
     plot_all_lfp(data, out_dir, name, **kwargs)
 
@@ -185,7 +186,7 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
 
         fooof_arr_s = np.array(info_for_fooof_ctrl[r]["spectra"])
         fooof_arr_f = np.array(info_for_fooof_ctrl[r]["frequency"])
-        fg.fit(fooof_arr_f, fooof_arr_s, [1.5, fmax], progress="tqdm")
+        fg.fit(fooof_arr_f, fooof_arr_s, [0.5, fmax], progress="tqdm")
         out_name = name + f"--{r}--foof--ctrl.pdf"
         fg.save_report(out_name, os.path.join(out_dir, "summary"))
 
@@ -204,7 +205,7 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
 
         fooof_arr_s = np.array(info_for_fooof_lesion[r]["spectra"])
         fooof_arr_f = np.array(info_for_fooof_lesion[r]["frequency"])
-        fg.fit(fooof_arr_f, fooof_arr_s, [1.5, fmax], progress="tqdm")
+        fg.fit(fooof_arr_f, fooof_arr_s, [0.5, fmax], progress="tqdm")
         out_name = name + f"--{r}--foof--lesion.pdf"
         fg.save_report(out_name, os.path.join(out_dir, "summary"))
 
@@ -247,8 +248,8 @@ def plot_all_lfp(info, out_dir, name, **kwargs):
     control_data = []
     lesion_data = []
     x_data = []
-    for item in info:
-        for val in item:
+    for item, fnames in zip(info, kwargs["fnames"]):
+        for val, fname in zip(item, fnames):
             # l1 = freq, l2 - coherence, l3 - group
             this_item = list(val.values())[0]
             to_use = this_item
@@ -273,7 +274,7 @@ def plot_all_lfp(info, out_dir, name, **kwargs):
     data = np.concatenate(parsed_info, axis=1)
     df = pd.DataFrame(data.transpose(), columns=["frequency", "coherence", "Group"])
     df.replace("Control", "Control (ATN,   N = 6)", inplace=True)
-    df.replace("Lesion", "Lesion  (ATNx, N = 6)", inplace=True)
+    df.replace("Lesion", "Lesion  (ATNx, N = 5)", inplace=True)
     df[["frequency", "coherence"]] = df[["frequency", "coherence"]].apply(pd.to_numeric)
 
     sns.lineplot(
