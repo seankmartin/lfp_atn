@@ -24,8 +24,6 @@ except ImportError:
 
 from neuronal.decoding import LFPDecoder
 
-here = os.path.dirname(os.path.abspath(__file__))
-
 
 def decoding(lfp_array, groups, labels, base_dir):
 
@@ -83,9 +81,7 @@ def main(
     clean_kwargs = cfg["clean_kwargs"]
     window_sec = 0.5
     fmin, fmax = 0.5, 40
-
-    # Don't analyse more than 6 seconds
-    max_len = 6
+    max_lfp_lengths_seconds = {"start": 20, "choice": (2.5, 0.5), "end": 10}
 
     ituples = df.itertuples()
     num_rows = len(df)
@@ -106,12 +102,15 @@ def main(
     groups = []
     choices = []
     pxx_arr = []
+    here = os.path.dirname(os.path.abspath(__file__))
     oname_coherence = os.path.join(
         here, "..", "sim_results", "tmaze", "coherence_full.csv"
     )
     oname_power_tmaze = os.path.join(
         here, "..", "sim_results", "tmaze", "power_tmaze_full.csv"
     )
+
+    # Load existing data if instructed to and it exists
     os.makedirs(os.path.dirname(oname_coherence), exist_ok=True)
     skip = (
         (os.path.exists(decoding_loc))
@@ -135,12 +134,16 @@ def main(
     ## Extract LFP, do coherence, and plot
     if not skip:
         for j in range(num_rows // 2):
+
+            # row1 is the forced movement
             row1 = next(ituples)
+            # row2 is the choice trial
             row2 = next(ituples)
+
+            # Load the t-maze data
             recording_location = os.path.join(base_dir, row1.location)
             recording_location = recording_location.replace("--", os.sep)
             param_file = os.path.join(here, "..", "recording_mappings", row1.mapping)
-
             recording = simuran.Recording(
                 param_file=param_file, base_file=recording_location, load=False
             )
@@ -149,15 +152,14 @@ def main(
             sig_dict = lfp_clean.clean(
                 recording, min_f=fmin, max_f=fmax, method_kwargs=clean_kwargs
             )["signals"]
-
             x = np.array(sig_dict["SUB"].samples.to(u.mV))
             duration = len(x) / 250
             y = np.array(sig_dict["RSC"].samples.to(u.mV))
             fs = sig_dict["SUB"].sampling_rate
 
+            # Setup and loading done -- Analyse the t-maze data
             if do_coherence:
-                recording.spatial.load()
-                spatial = recording.spatial.underlying
+                # Coherence over the whole recording
                 f, Cxy = coherence(x, y, fs, nperseg=window_sec * 250)
                 f = f[np.nonzero((f >= fmin) & (f <= fmax))]
                 Cxy = Cxy[np.nonzero((f >= fmin) & (f <= fmax))]
@@ -168,26 +170,99 @@ def main(
                 max_delta_coherence_ = np.amax(delta_co)
 
             if plot_individual_sessions:
+                # Used to plot t-maze sessions - mostly for verification
+                recording.spatial.load()
+                spatial = recording.spatial.underlying
                 fig, ax = plt.subplots()
 
-            # Loop over the two parts of a trial
-            # TODO decide if this should just be for the first/final part of the trial
-            # Use (row1, row2 for both parts)
-            for k_, r in enumerate((row2,)):
-                # end or choice could be used
-                # t1, t2 = r.start, r.end
-                t1, t2 = r.start, r.choice
-                t3 = r.end
+            for k_, r in enumerate(
+                (
+                    row1,
+                    row2,
+                )
+            ):
+                if k_ == 0:
+                    trial_type = "forced"
+                else:
+                    trial_type = "choice"
+
+                # Parse out the times
+                t1, t2, t3 = r.start, r.choice, r.end
+
+                # Make sure there are no parsing errors
                 if t3 > duration:
                     raise RuntimeError(
                         "Last time {} greater than duration {}".format(t3, duration)
                     )
-                lfpt1, lfpt2 = int(floor(t1 * 250)), int(ceil(t2 * 250))
-                if (lfpt2 - lfpt1) > (max_len * 250):
-                    lfpt2 = lfpt1 + (max_len * 250)
-                # Make sure have at least 1 second
-                if (lfpt2 - lfpt1) < 250:
-                    lfpt2 = lfpt1 + 250
+
+                # Convert these times into LFP samples
+                lfpt1, lfpt2, lfpt3 = (
+                    int(floor(t1 * fs)),
+                    int(ceil(t2 * fs)),
+                    int(ceil(t3 * fs)),
+                )
+
+                # Split the LFP into three parts, the start, choice, and end
+                lfp_portions = {}
+                time_dict = {
+                    "start": (lfpt1, lfpt2, lfpt2),
+                    "choice": (lfpt1, lfpt2, lfpt3),
+                    "end": (lfpt2, lfpt3, lfpt3),
+                }
+                for k, v in max_lfp_lengths_seconds.items():
+                    max_len = v
+                    start_time = time_dict[k][0]
+                    choice_time = time_dict[k][1]
+                    end_time = time_dict[k][2]
+
+                    if k == "start":
+                        # If the start bit is longer than max_len, take the last X
+                        # seconds before the choice data
+                        ct = max_lfp_lengths_seconds["choice"][0]
+                        end_time = max(end_time - int(floor(ct * fs)), start_time)
+                        natural_start_time = end_time - max_len * fs
+                        start_time = max(natural_start_time, start_time)
+                    elif k == "choice":
+                        # For the choice, take (max_len[0], max_len[1]) seconds
+                        # of data around the point
+                        left_push = int(floor(v[0] * fs))
+                        right_push = int(ceil(v[1] * fs))
+
+                        start_time = max(choice_time - left_push, start_time)
+                        end_time = min(choice_time + right_push, end_time)
+                    elif k == "end":
+                        # For the end time, if the end is longer than max_len, take the first X seconds after the choice data
+                        ct = max_lfp_lengths_seconds["choice"][1]
+                        start_time = min(start_time + int(ceil(ct * fs)), end_time)
+                        natural_end_time = start_time + max_len * fs
+                        end_time = min(natural_end_time, end_time)
+                    else:
+                        raise RuntimeError(f"Unsupported key {k}")
+
+                    # Make sure have at least 1 second
+                    if (end_time - start_time) < fs:
+                        end_time = start_time + fs
+
+                    if end_time > int(ceil(duration * 250)):
+                        raise RuntimeError(
+                            "End time {} greater than duration {}".format(
+                                end_time, duration
+                            )
+                        )
+
+                    lfp_portions[k] = (start_time, end_time)
+
+                if j % 20 == 0:
+                    print(f"On iteration {j} of {num_rows // 2} -- trial {trial_type}")
+                    for k in lfp_portions.keys():
+                        print(
+                            "{}: {} -- {}".format(
+                                k,
+                                np.array(time_dict[k]) / 250,
+                                np.array(lfp_portions[k]) / 250,
+                            )
+                        )
+                    print("----------------------")
 
                 if plot_individual_sessions:
                     if r.test == "first":
@@ -208,62 +283,132 @@ def main(
                 if do_coherence:
                     res_dict = {}
                     # Power
-                    for region, signal in sig_dict.items():
-                        lfp = NLfp()
-                        lfp.set_channel_id(signal.channel)
-                        lfp._timestamp = np.array(
-                            signal.timestamps[lfpt1:lfpt2].to(u.s)
-                        )
-                        lfp._samples = np.array(signal.samples[lfpt1:lfpt2].to(u.mV))
-                        lfp._record_info["Sampling rate"] = signal.sampling_rate
-                        delta_power = lfp.bandpower(
-                            [delta_min, delta_max],
-                            window_sec=window_sec,
-                            band_total=True,
-                        )
-                        theta_power = lfp.bandpower(
-                            [theta_min, theta_max],
-                            window_sec=window_sec,
-                            band_total=True,
-                        )
-                        res_dict["{}_delta".format(region)] = delta_power[
-                            "relative_power"
-                        ]
-                        res_dict["{}_theta".format(region)] = theta_power[
-                            "relative_power"
-                        ]
+                    for k, v in lfp_portions.items():
+                        for region, signal in sig_dict.items():
+                            lfpt1, lfpt2 = v
+                            lfp = NLfp()
+                            lfp.set_channel_id(signal.channel)
 
-                    res_list = [
-                        r.location,
-                        r.session,
-                        r.animal,
-                        r.test,
-                        r.passed.strip(),
-                    ]
-                    res_list += [
-                        res_dict["SUB_delta"],
-                        res_dict["SUB_theta"],
-                        res_dict["RSC_delta"],
-                        res_dict["RSC_theta"],
-                    ]
+                            lfp._timestamp = np.array(
+                                signal.timestamps[lfpt1:lfpt2].to(u.s)
+                            )
+                            lfp._samples = np.array(
+                                signal.samples[lfpt1:lfpt2].to(u.mV)
+                            )
+                            lfp._record_info["Sampling rate"] = signal.sampling_rate
+                            delta_power = lfp.bandpower(
+                                [delta_min, delta_max],
+                                window_sec=window_sec,
+                                band_total=True,
+                            )
+                            theta_power = lfp.bandpower(
+                                [theta_min, theta_max],
+                                window_sec=window_sec,
+                                band_total=True,
+                            )
+                            res_dict["{}-{}_delta".format(region, k)] = delta_power[
+                                "relative_power"
+                            ]
+                            res_dict["{}-{}_theta".format(region, k)] = theta_power[
+                                "relative_power"
+                            ]
 
-                    # Coherence
+                        sub_s = sig_dict["SUB"]
+                        rsc_s = sig_dict["RSC"]
+                        x = np.array(sub_s.samples[lfpt1:lfpt2].to(u.mV))
+                        y = np.array(rsc_s.samples[lfpt1:lfpt2].to(u.mV))
+
+                        f, Cxy = coherence(x, y, fs, nperseg=window_sec * 250)
+                        f = f[np.nonzero((f >= fmin) & (f <= fmax))]
+                        Cxy = Cxy[np.nonzero((f >= fmin) & (f <= fmax))]
+
+                        theta_co = Cxy[np.nonzero((f == 10.0))]
+                        delta_co = Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
+                        max_theta_coherence = np.amax(theta_co)
+                        max_delta_coherence = np.amax(delta_co)
+
+                        if trial_type == "forced":
+                            final_trial_type = "forced"
+                        else:
+                            if r.passed.strip().upper() == "Y":
+                                final_trial_type = "choice correct"
+                            elif r.passed.strip().upper() == "N":
+                                final_trial_type = "choice errors"
+                            else:
+                                final_trial_type = "ERROR IN ANALYSIS"
+
+                        res_list = [
+                            r.location,
+                            r.session,
+                            r.animal,
+                            r.test,
+                            r.passed.strip(),
+                            k,
+                            final_trial_type,
+                        ]
+                        res_list += [
+                            res_dict[f"SUB-{k}_delta"],
+                            res_dict[f"SUB-{k}_theta"],
+                            res_dict[f"RSC-{k}_delta"],
+                            res_dict[f"RSC-{k}_theta"],
+                        ]
+                        res_list += [max_theta_coherence, max_delta_coherence]
+                        res_list += [max_theta_coherence_, max_delta_coherence_]
+                        results.append(res_list)
+
+                        if no_pass is False:
+                            group = (
+                                "Control"
+                                if r.animal.lower().startswith("c")
+                                else "Lesion (ATNx)"
+                            )
+                            if do_coherence:
+                                for f_, cxy_ in zip(f, Cxy):
+                                    coherence_df_list.append(
+                                        (
+                                            f_,
+                                            cxy_,
+                                            r.passed.strip(),
+                                            group,
+                                            r.test,
+                                            r.session,
+                                            k,
+                                            final_trial_type,
+                                        )
+                                    )
+
+                                f_welch, Pxx = welch(
+                                    x,
+                                    fs=fs,
+                                    nperseg=window_sec * 250,
+                                    return_onesided=True,
+                                    scaling="density",
+                                    average="mean",
+                                )
+
+                                f_welch = f_welch[
+                                    np.nonzero((f_welch >= fmin) & (f_welch <= fmax))
+                                ]
+                                Pxx = Pxx[
+                                    np.nonzero((f_welch >= fmin) & (f_welch <= fmax))
+                                ]
+
+                                # Convert to full scale relative dB (so max at 0)
+                                Pxx_max = np.max(Pxx)
+                                Pxx = 10 * np.log10(Pxx / Pxx_max)
+                                for p_val, f_val in zip(Pxx, f_welch):
+                                    pxx_arr.append(
+                                        [
+                                            f_val,
+                                            p_val,
+                                            r.passed.strip(),
+                                            group,
+                                            k,
+                                            final_trial_type,
+                                        ]
+                                    )
+
                     name = os.path.splitext(r.location)[0]
-
-                    sub_s = sig_dict["SUB"]
-                    rsc_s = sig_dict["RSC"]
-                    x = np.array(sub_s.samples[lfpt1:lfpt2].to(u.mV))
-                    y = np.array(rsc_s.samples[lfpt1:lfpt2].to(u.mV))
-
-                    f, Cxy = coherence(x, y, fs, nperseg=window_sec * 250)
-                    f = f[np.nonzero((f >= fmin) & (f <= fmax))]
-                    Cxy = Cxy[np.nonzero((f >= fmin) & (f <= fmax))]
-
-                    theta_co = Cxy[np.nonzero((f == 10.0))]
-                    delta_co = Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
-                    max_theta_coherence = np.amax(theta_co)
-                    max_delta_coherence = np.amax(delta_co)
-
                     if plot_individual_sessions:
                         fig2, ax2 = plt.subplots(3, 1)
                         ax2[0].plot(f, Cxy, c="k")
@@ -280,44 +425,9 @@ def main(
                         )
                         plt.close(fig2)
 
-                    res_list += [max_theta_coherence, max_delta_coherence]
-                    res_list += [max_theta_coherence_, max_delta_coherence_]
-                    results.append(res_list)
-
-                if no_pass is False:
-                    group = (
-                        "Control"
-                        if r.animal.lower().startswith("c")
-                        else "Lesion (ATNx)"
-                    )
-                    if do_coherence:
-                        for f_, cxy_ in zip(f, Cxy):
-                            coherence_df_list.append(
-                                (f_, cxy_, r.passed.strip(), group, r.test, r.session)
-                            )
-
-                        f_welch, Pxx = welch(
-                            x,
-                            fs=fs,
-                            nperseg=window_sec * 250,
-                            return_onesided=True,
-                            scaling="density",
-                            average="mean",
-                        )
-
-                        f_welch = f_welch[
-                            np.nonzero((f_welch >= fmin) & (f_welch <= fmax))
-                        ]
-                        Pxx = Pxx[np.nonzero((f_welch >= fmin) & (f_welch <= fmax))]
-
-                        # Convert to full scale relative dB (so max at 0)
-                        Pxx_max = np.max(Pxx)
-                        Pxx = 10 * np.log10(Pxx / Pxx_max)
-                        for p_val, f_val in zip(Pxx, f_welch):
-                            pxx_arr.append([f_val, p_val, r.passed.strip(), group])
-
                 # For decoding
                 if do_decoding:
+                    lfpt1, lfpt2 = lfp_portions["choice"]
                     sub_s = sig_dict["SUB"].filter(theta_min, theta_max)
                     rsc_s = sig_dict["RSC"].filter(theta_min, theta_max)
                     x = np.array(sub_s.samples[lfpt1:lfpt2].to(u.mV))
@@ -346,6 +456,8 @@ def main(
             "animal",
             "test",
             "choice",
+            "part",
+            "trial",
             "SUB_delta",
             "SUB_theta",
             "RSC_delta",
@@ -365,69 +477,96 @@ def main(
         df_to_file(res_df, out_name, index=False)
 
         # Plot difference between pass and fail trials
-        headers = ["Frequency (Hz)", "Coherence", "Passed", "Group", "Test", "Session"]
+        headers = [
+            "Frequency (Hz)",
+            "Coherence",
+            "Passed",
+            "Group",
+            "Test",
+            "Session",
+            "Part",
+            "Trial",
+        ]
         coherence_df = list_to_df(coherence_df_list, headers=headers)
 
         df_to_file(coherence_df, oname_coherence, index=False)
 
         power_df = list_to_df(
-            pxx_arr, headers=["Frequency (Hz)", "Power (dB)", "Passed", "Group"]
+            pxx_arr,
+            headers=[
+                "Frequency (Hz)",
+                "Power (dB)",
+                "Passed",
+                "Group",
+                "Part",
+                "Trial",
+            ],
         )
 
         df_to_file(power_df, oname_power_tmaze, index=False)
 
     if do_coherence or skip:
-        # coherence_df = coherence_df[coherence_df["Test"] == "second"]
-        simuran.set_plot_style()
-        sns.lineplot(
-            data=coherence_df,
-            x="Frequency (Hz)",
-            y="Coherence",
-            hue="Group",
-            style="Passed",
-            ci=None,
-            estimator=np.median,
-        )
-        plt.ylim(0, 1)
-        simuran.despine()
-        plt.savefig(
-            os.path.join(here, "..", "sim_results", "tmaze", "coherence.pdf"), dpi=400
-        )
-        plt.close("all")
 
-        sns.lineplot(
-            data=coherence_df,
-            x="Frequency (Hz)",
-            y="Coherence",
-            hue="Group",
-            style="Passed",
-            ci=95,
-            estimator=np.median,
-        )
-        plt.ylim(0, 1)
-        simuran.despine()
-        plt.savefig(
-            os.path.join(here, "..", "sim_results", "tmaze", "coherence_ci.pdf"),
-            dpi=400,
-        )
-        plt.close("all")
+        for group in ("Control", "Lesion (ATNx)"):
+            coherence_df_sub = coherence_df[coherence_df["Group"] == group]
+            power_df_sub = power_df[power_df["Group"] == group]
+            simuran.set_plot_style()
+            sns.lineplot(
+                data=coherence_df_sub,
+                x="Frequency (Hz)",
+                y="Coherence",
+                hue="Part",
+                style="Trial",
+                ci=None,
+                estimator=np.median,
+            )
+            plt.ylim(0, 1)
+            simuran.despine()
+            plt.savefig(
+                os.path.join(
+                    here, "..", "sim_results", "tmaze", f"{group}--coherence.pdf"
+                ),
+                dpi=400,
+            )
+            plt.close("all")
 
-        sns.lineplot(
-            data=power_df,
-            x="Frequency (Hz)",
-            y="Power (dB)",
-            hue="Group",
-            style="Passed",
-            ci=95,
-            estimator=np.median,
-        )
-        plt.xlim(0, 40)
-        simuran.despine()
-        plt.savefig(
-            os.path.join(here, "..", "sim_results", "tmaze", "power_ci.pdf"),
-            dpi=400,
-        )
-        plt.close("all")
+            sns.lineplot(
+                data=coherence_df_sub,
+                x="Frequency (Hz)",
+                y="Coherence",
+                hue="Part",
+                style="Trial",
+                ci=95,
+                estimator=np.median,
+            )
+            plt.ylim(0, 1)
+            simuran.despine()
+            plt.savefig(
+                os.path.join(
+                    here, "..", "sim_results", "tmaze", f"{group}--coherence_ci.pdf"
+                ),
+                dpi=400,
+            )
+            plt.close("all")
+
+            sns.lineplot(
+                data=power_df_sub,
+                x="Frequency (Hz)",
+                y="Power (dB)",
+                hue="Part",
+                style="Trial",
+                ci=95,
+                estimator=np.median,
+            )
+            plt.xlim(0, 40)
+            simuran.despine()
+            plt.savefig(
+                os.path.join(
+                    here, "..", "sim_results", "tmaze", f"{group}--power_ci.pdf"
+                ),
+                dpi=400,
+            )
+            plt.close("all")
 
     # Try to decode pass and fail trials.
     if not os.path.exists(decoding_loc) or overwrite:
@@ -450,13 +589,13 @@ def main(
 
 
 if __name__ == "__main__":
-    here = os.path.dirname(os.path.abspath(__file__))
-    main_output_location = os.path.join(here, "results")
+    here_main = os.path.dirname(os.path.abspath(__file__))
+    main_output_location = os.path.join(here_main, "results")
 
     main_base_dir = r"D:\SubRet_recordings_imaging"
     main_xls_location = os.path.join(main_output_location, "tmaze-times.csv")
 
-    cfg_path = os.path.abspath(os.path.join(here, "..", "configs", "default.py"))
+    cfg_path = os.path.abspath(os.path.join(here_main, "..", "configs", "default.py"))
     simuran.set_config_path(cfg_path)
 
     main_plot_individual_sessions = False

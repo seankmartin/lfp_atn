@@ -131,9 +131,12 @@ def main():
         os.path.join(results_dir, "tmaze", "coherence_full.csv"),
     ]
     fig_list = [
-        os.path.join(results_dir, "tmaze", "coherence_ci.pdf"),
-        os.path.join(results_dir, "tmaze", "coherence.pdf"),
-        os.path.join(results_dir, "tmaze", "power_ci.pdf"),
+        os.path.join(results_dir, "tmaze", "Control--coherence_ci.pdf"),
+        os.path.join(results_dir, "tmaze", "Control--coherence.pdf"),
+        os.path.join(results_dir, "tmaze", "Control--power_ci.pdf"),
+        os.path.join(results_dir, "tmaze", "Lesion (ATNx)--coherence_ci.pdf"),
+        os.path.join(results_dir, "tmaze", "Lesion (ATNx)--coherence.pdf"),
+        os.path.join(results_dir, "tmaze", "Lesion (ATNx)--power_ci.pdf"),
     ]
     tmaze_dict = {
         "reason": "T-maze coherence around decision time.",
