@@ -13,7 +13,6 @@ from scipy.signal import coherence
 from skm_pyutils.py_table import list_to_df, df_from_file, df_to_file
 import seaborn as sns
 from scipy.signal import welch
-import mne
 
 try:
     from lfp_atn_simuran.analysis.lfp_clean import LFPClean
@@ -28,22 +27,16 @@ from neuronal.decoding import LFPDecoder
 def decoding(lfp_array, groups, labels, base_dir):
 
     for group in ["Control", "Lesion (ATNx)"]:
-        sfreq = 250
-        ch_types = ["eeg", "eeg"]
-        ch_names = ["SUB", "RSC"]
 
         correct_groups = groups == group
-        info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=ch_types)
-        # Can use 0 here on idx 2 to only have SUB
-        lfp_to_use = lfp_array[correct_groups, :, :]
-        mne_epochs = mne.EpochsArray(lfp_to_use, info)
+        lfp_to_use = lfp_array[correct_groups, :]
         labels_ = labels[correct_groups]
 
         decoder = LFPDecoder(
             labels=labels_,
-            mne_epochs=mne_epochs,
+            mne_epochs=None,
+            features=lfp_to_use,
             cv_params={"n_splits": 100},
-            feature_params={"step": 25},
         )
         out = decoder.decode()
 
@@ -51,6 +44,11 @@ def decoding(lfp_array, groups, labels, base_dir):
 
         print("\n----------Cross Validation-------------")
 
+        decoder.cross_val_decode(shuffle=False)
+        pprint(decoder.cross_val_result)
+        pprint(decoder.confidence_interval_estimate("accuracy"))
+
+        print("\n----------Cross Validation Control (shuffled)-------------")
         decoder.cross_val_decode(shuffle=True)
         pprint(decoder.cross_val_result)
         pprint(decoder.confidence_interval_estimate("accuracy"))
@@ -95,10 +93,11 @@ def main(
     coherence_df_list = []
 
     base_dir_new = os.path.dirname(excel_location)
-    decoding_loc = os.path.join(base_dir_new, "lfp_decoding.csv")
-    lfp_len = 500
+    decoding_loc = out_name = os.path.join(
+            here, "..", "sim_results", "tmaze", "lfp_decoding.csv")
+    lfp_len = 6
     hf = lfp_len // 2
-    new_lfp = np.zeros(shape=(num_rows // 2, 2, lfp_len))
+    new_lfp = np.zeros(shape=(num_rows // 2, lfp_len))
     groups = []
     choices = []
     pxx_arr = []
@@ -124,10 +123,8 @@ def main(
                 groups.append(row[0])
                 choices.append(row[1])
                 vals = row[2:]
-                new_lfp[i, 0] = np.array([float(v) for v in vals[:lfp_len]])
-                new_lfp[i, 1] = np.array(
-                    [float(v) for v in vals[lfp_len : 2 * (lfp_len)]]
-                )
+                new_lfp[i] = np.array([float(v) for v in vals[:lfp_len]])
+
         coherence_df = df_from_file(oname_coherence)
         power_df = df_from_file(oname_power_tmaze)
 
@@ -322,6 +319,14 @@ def main(
                         f = f[np.nonzero((f >= fmin) & (f <= fmax))]
                         Cxy = Cxy[np.nonzero((f >= fmin) & (f <= fmax))]
 
+                        if do_decoding:
+                            if k == "choice":
+                                coherence_vals_for_decode = Cxy[
+                                    np.nonzero((f >= theta_min) & (f <= theta_max))
+                                ]
+                                s, e = (k_) * hf, (k_ + 1) * hf
+                                new_lfp[j, s:e] = coherence_vals_for_decode
+
                         theta_co = Cxy[np.nonzero((f == 10.0))]
                         delta_co = Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
                         max_theta_coherence = np.amax(theta_co)
@@ -424,17 +429,6 @@ def main(
                             )
                         )
                         plt.close(fig2)
-
-                # For decoding
-                if do_decoding:
-                    lfpt1, lfpt2 = lfp_portions["choice"]
-                    sub_s = sig_dict["SUB"].filter(theta_min, theta_max)
-                    rsc_s = sig_dict["RSC"].filter(theta_min, theta_max)
-                    x = np.array(sub_s.samples[lfpt1:lfpt2].to(u.mV))
-                    y = np.array(rsc_s.samples[lfpt1:lfpt2].to(u.mV))
-
-                    new_lfp[j, 0, k_ * hf : (k_ + 1) * hf] = np.abs(x[-hf:])
-                    new_lfp[j, 1, k_ * hf : (k_ + 1) * hf] = np.abs(y[-hf:])
 
             if do_decoding:
                 groups.append(group)
@@ -575,9 +569,7 @@ def main(
                 line = ""
                 line += f"{groups[i]},"
                 line += f"{choices[i]},"
-                for v in new_lfp[i, 0]:
-                    line += f"{v},"
-                for v in new_lfp[i, 1]:
+                for v in new_lfp[i]:
                     line += f"{v},"
                 line = line[:-1] + "\n"
                 f.write(line)
@@ -585,7 +577,8 @@ def main(
     if do_decoding:
         groups = np.array(groups)
         labels = np.array(choices)
-        decoding(new_lfp, groups, labels, base_dir_new)
+        decoding(new_lfp, groups, labels, os.path.join(
+            here, "..", "sim_results", "tmaze")
 
 
 if __name__ == "__main__":
@@ -600,9 +593,9 @@ if __name__ == "__main__":
 
     main_plot_individual_sessions = False
     main_do_coherence = True
-    main_do_decoding = False
+    main_do_decoding = True
 
-    main_overwrite = False
+    main_overwrite = True
     main(
         main_xls_location,
         main_base_dir,
