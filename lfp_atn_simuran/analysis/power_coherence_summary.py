@@ -225,8 +225,11 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
             multiple="stack",
             # element="step",
             ax=ax,
+            binwidth=1,
         )
         simuran.despine()
+        ax.set_title(f"{r} Peak frequencies")
+        ax.set_xlim(2, 20)
         out_name = os.path.join(out_dir, "summary", name + f"--foof--{r}combined.pdf")
         fig.savefig(out_name, dpi=400)
 
