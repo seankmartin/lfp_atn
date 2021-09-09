@@ -33,7 +33,10 @@ def describe_task(task_name, info_dict, all_files):
         dfs = info_dict["dfs"]
 
     if "reason" not in info_dict:
-        reason_str = task_info["doc"].split("--reason ")[-1].split('"')[1]
+        try:
+            reason_str = task_info["doc"].split("--reason ")[-1].split('"')[1]
+        except IndexError:
+            reason_str = "Unknown reason"
     else:
         reason_str = info_dict["reason"]
     out(f"\tPurpose -- {reason_str}")
