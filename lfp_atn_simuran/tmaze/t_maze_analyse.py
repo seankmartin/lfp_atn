@@ -93,15 +93,15 @@ def main(
     coherence_df_list = []
 
     base_dir_new = os.path.dirname(excel_location)
+    here = os.path.dirname(os.path.abspath(__file__))
     decoding_loc = out_name = os.path.join(
-            here, "..", "sim_results", "tmaze", "lfp_decoding.csv")
+        here, "..", "sim_results", "tmaze", "lfp_decoding.csv")
     lfp_len = 6
     hf = lfp_len // 2
     new_lfp = np.zeros(shape=(num_rows // 2, lfp_len))
     groups = []
     choices = []
     pxx_arr = []
-    here = os.path.dirname(os.path.abspath(__file__))
     oname_coherence = os.path.join(
         here, "..", "sim_results", "tmaze", "coherence_full.csv"
     )
@@ -163,8 +163,8 @@ def main(
 
                 theta_co = Cxy[np.nonzero((f >= theta_min) & (f <= theta_max))]
                 delta_co = Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
-                max_theta_coherence_ = np.amax(theta_co)
-                max_delta_coherence_ = np.amax(delta_co)
+                max_theta_coherence_ = np.nanmean(theta_co)
+                max_delta_coherence_ = np.nanmean(delta_co)
 
             if plot_individual_sessions:
                 # Used to plot t-maze sessions - mostly for verification
@@ -327,10 +327,10 @@ def main(
                                 s, e = (k_) * hf, (k_ + 1) * hf
                                 new_lfp[j, s:e] = coherence_vals_for_decode
 
-                        theta_co = Cxy[np.nonzero((f == 10.0))]
+                        theta_co = Cxy[np.nonzero((f >= theta_min) & (f <= theta_max))]
                         delta_co = Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
-                        max_theta_coherence = np.amax(theta_co)
-                        max_delta_coherence = np.amax(delta_co)
+                        max_theta_coherence = np.nanmean(theta_co)
+                        max_delta_coherence = np.nanmean(delta_co)
 
                         if trial_type == "forced":
                             final_trial_type = "forced"
