@@ -3,7 +3,7 @@ import os
 import shutil
 import csv
 
-from skm_pyutils.py_table import df_from_file
+from skm_pyutils.py_table import df_from_file, df_to_file
 from skm_pyutils.py_pdf import pdf_cat
 from skm_pyutils.py_config import read_cfg
 
@@ -72,7 +72,10 @@ def main():
         os.path.join(summary_location, "run_coherence.pdf"),
         os.path.join(summary_location, "run_coherence_ci.pdf"),
     ]
-    id_["task_coherence"] = {"figs": fig_list}
+    df_list = [
+        os.path.join(results_dir, "fn_coherence", "merge--fn_coherence.csv"),
+    ]
+    id_["task_coherence"] = {"figs": fig_list, "dfs": df_list}
 
     ## LFP power results in openfield
     fig_list = [
@@ -95,6 +98,9 @@ def main():
     fig_list = [
         os.path.join(summary_location, "run_speed_theta--sub--speed--theta_ci.pdf"),
         os.path.join(summary_location, "run_speed_theta--rsc--speed--theta_ci.pdf"),
+    ]
+    df_list = [
+        os.path.join(results_dir, "fn_speed_theta", "merge--fn_speed_theta.csv"),
     ]
     id_["task_lfp_speed"] = {"figs": fig_list}
 
@@ -229,6 +235,15 @@ def main():
                 file.write(out_str[:-1])
         else:
             shutil.copy(f, out_loc_merge_file)
+
+    f1 = os.path.join(out_loc_merge, "fn_spectra--merge--fn_spectra.csv")
+    f2 = os.path.join(out_loc_merge, "fn_speed_theta--merge--fn_speed_theta.csv")
+
+    df1 = df_from_file(f1).drop(["Condition"], axis=1)
+    df2 = df_from_file(f2)
+
+    merged_df = df1.merge(df2, on=["Recording_directory", "Recording_name"])
+    df_to_file(merged_df, os.path.join(out_loc_merge, "merged_speed.csv"))
 
 
 if __name__ == "__main__":
