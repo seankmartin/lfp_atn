@@ -25,7 +25,7 @@ def plot_coherence(x, y, ax, fs=250, group="ATNx", fmin=1, fmax=100):
     plt.ylabel("Coherence")
     plt.ylim(0, 1)
 
-    return np.array([f, Cxy, [group] * len(f)])
+    return f, Cxy, np.array([f, Cxy, [group] * len(f)])
 
 
 def define_recording_group(base_dir):
@@ -48,6 +48,10 @@ def plot_recording_coherence(
 ):
     fmt = kwargs.get("image_format", "png")
     clean_kwargs = kwargs.get("clean_kwargs", {})
+    delta_min = kwargs.get("delta_min", 1.5)
+    delta_max = kwargs.get("delta_max", 4)
+    theta_min = kwargs.get("theta_min", 6)
+    theta_max = kwargs.get("theta_max", 10)
     group = define_recording_group(base_dir)
     result = {}
 
@@ -69,7 +73,13 @@ def plot_recording_coherence(
     simuran.set_plot_style()
     fig, ax = plt.subplots()
     sr = v1.sampling_rate
-    result = plot_coherence(v1, v2, ax, sr, group, fmin=fmin, fmax=fmax)
+    f, Cxy, g = plot_coherence(v1, v2, ax, sr, group, fmin=fmin, fmax=fmax)
+    theta_co = Cxy[np.nonzero((f >= theta_min) & (f <= theta_max))]
+    delta_co = Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
+    result["theta_coherence"] = np.nanmean(theta_co)
+    result["delta_coherence"] = np.nanmean(delta_co)
+    result["full_res"] = g
+
     ax.set_ylim(0, 1)
     figures.append(simuran.SimuranFigure(fig, name, dpi=400, done=True, format=fmt))
 

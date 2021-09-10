@@ -255,11 +255,11 @@ def plot_all_lfp(info, out_dir, name, **kwargs):
         for val, fname in zip(item, fnames):
             # l1 = freq, l2 - coherence, l3 - group
             this_item = list(val.values())[0]
-            to_use = this_item
+            to_use = this_item["full_res"]
             # to_use[1] = smooth_1d(
             #     this_item[1].astype(float), kernel_type="hg", kernel_size=5
             # )
-            if this_item[2][0] == "Control":
+            if to_use[2][0] == "Control":
                 control_data.append(to_use[1])
             else:
                 lesion_data.append(to_use[1])
@@ -316,7 +316,7 @@ def plot_all_lfp(info, out_dir, name, **kwargs):
     plt.xlabel("Frequency (Hz)")
     plt.ylabel("Coherence")
 
-    print("Saving plots to {}".format(out_dir))
+    print("Saving plots to {}".format(os.path.join(out_dir, "summary")))
     plt.savefig(os.path.join(out_dir, "summary", name + ".pdf"), dpi=400)
 
     plt.ylim(0, 1)
@@ -336,6 +336,5 @@ def plot_all_lfp(info, out_dir, name, **kwargs):
     plt.xlabel("Frequency (Hz)")
     plt.ylabel("Difference")
 
-    print("Saving to {}".format((os.path.join(out_dir, name + "--difference.pdf"))))
     plt.savefig(os.path.join(out_dir, "summary", name + "--difference.pdf"), dpi=400)
     plt.close("all")

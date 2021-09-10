@@ -79,10 +79,13 @@ def setup_figures():
 def setup_output():
     """Establish what results of the functions will be saved."""
     # This should list the results to save to a csv
-    save_list = []
+    save_list = [
+        ("results", "plot_recording_coherence", "theta_coherence"),
+        ("results", "plot_recording_coherence", "delta_coherence")
+    ]
 
     # You can name each of these outputs
-    output_names = []
+    output_names = ["Theta Coherence", "Delta Coherence"]
 
     return save_list, output_names
 
