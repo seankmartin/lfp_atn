@@ -74,20 +74,18 @@ def calc_ibi(spike_train, speed, speed_sr, burst_thresh=5):
         for j in range(0, num_burst - 1):
             time_end = unitStamp[burst_start[j + 1]]
             time_start = unitStamp[burst_end[j]]
-            ibi.append(time_end - time_start)
+            ibi.append((time_end - time_start) * 1000)
             speed_time_idx1 = int(floor(time_start * speed_sr))
             speed_time_idx2 = int(ceil(time_end * speed_sr))
             burst_speed = speed[speed_time_idx1:speed_time_idx2]
             avg_speed = np.mean(burst_speed)
             ibi_speeds.append(avg_speed)
 
-        # ibi in sec, burst_duration in ms
     else:
         simuran.log.warning("No burst detected")
         return None, None
-    ibi = np.array(ibi) / 1000
 
-    return ibi, np.array(ibi_speeds)
+    return np.array(ibi), np.array(ibi_speeds)
 
 
 def speed_ibi(self, spike_train, **kwargs):
@@ -244,9 +242,12 @@ def vis_speed_ibi(df, out_dir=None):
     plt.close(fig)
 
     fig, ax = plt.subplots()
+    df["Median IBI"] = df["Median IBI"]
     sns.scatterplot(
         data=df, x="Mean speed", y="Median IBI", hue="Group", style="Spatial", ax=ax
     )
+    ax.set_xlabel("Mean speed (cm/s)")
+    ax.set_ylabel("Median IBI (s)")
     simuran.despine()
     out_name = os.path.join(out_dir, "..", "summary", "Speed_IBI_Median.pdf")
     fig.savefig(out_name, dpi=400)

@@ -123,7 +123,7 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
                 continue
             if cell not in available_units:
                 continue
-            
+
             spatial = unit.info.get(cell, {})
             spatial = spatial.get("class", "")
             if spatial.startswith("S"):
@@ -185,9 +185,7 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
 
             # Spike shuffling
             number_of_shuffles = kwargs.get("number_of_shuffles_sta", 500)
-            shuffled_times = unit.underlying.shift_spike_times(
-                number_of_shuffles, None
-            )
+            shuffled_times = unit.underlying.shift_spike_times(number_of_shuffles, None)
             shuffle_sfc_sub = np.zeros(shape=(number_of_shuffles, len(sfc)))
             spike_phase_vects = np.zeros(number_of_shuffles)
 
@@ -201,13 +199,13 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
                 spike_times = shuffled_times[i]
 
                 g_data = nc_sig.plv(spike_times, mode="bs", fwin=[0, 20], nrep=20)
-                sfc_sub = g_data["SFCm"]
-                shuffle_sfc_sub[i] = sfc_sub
+                sfc_sub_rand = g_data["SFCm"]
+                shuffle_sfc_sub[i] = sfc_sub_rand
 
                 if nc_sig2 is not None:
                     g_data = nc_sig2.plv(spike_times, mode="bs", fwin=[0, 20], nrep=20)
-                    sfc_rsc = g_data["SFCm"]
-                    shuffle_sfc_rsc[i] = sfc_rsc
+                    sfc_rsc_rand = g_data["SFCm"]
+                    shuffle_sfc_rsc[i] = sfc_rsc_rand
 
                 nc_sig.phase_dist(spike_train, fwin=fwin)
                 spike_phase_vects[i] = nc_sig.get_results()["LFP Spike Phase Res Vect"]
@@ -225,17 +223,19 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
             else:
                 spike_phase_vect_rsc_ci = None
 
+            theta_vals = []
             for f_val, sfc_val in zip(f, sfc):
-                sfc_theta_sub = 0
                 if fwin[0] <= f_val <= fwin[1]:
-                    sfc_theta_sub = max(sfc_theta_sub, sfc_val)
+                    theta_vals.append(sfc_val)
+            sfc_theta_sub = np.nanmean(theta_vals)
 
             sfc_theta_rsc = None
             if nc_sig2 is not None:
+                theta_vals = []
                 for f_val, sfc_val in zip(f, sfc_rsc):
-                    sfc_theta_rsc = 0
                     if fwin[0] <= f_val <= fwin[1]:
-                        sfc_theta_rsc = max(sfc_theta_rsc, sfc_val)
+                        theta_vals.append(sfc_val)
+                sfc_theta_rsc = np.nanmean(theta_vals)
 
             output[name_for_save] = [
                 mean_phase,
@@ -256,7 +256,7 @@ def recording_spike_lfp(recording, clean_method="avg", **kwargs):
                 f,
                 shuffle_sfc_sub,
                 shuffle_sfc_rsc,
-                spatial
+                spatial,
             ]
             unit.underlying.reset_results()
 
@@ -275,9 +275,7 @@ def combine_results(info, extra, **kwargs):
     base, ext = os.path.splitext(os.path.basename(filename))
 
     here = os.path.dirname(os.path.abspath(__file__))
-    cell_list_location = os.path.join(
-        here, "..", "cell_lists", cell_list_name
-    )
+    cell_list_location = os.path.join(here, "..", "cell_lists", cell_list_name)
     df = df_from_file(cell_list_location)
 
     for out_region in ["sub", "rsc"]:
@@ -309,15 +307,12 @@ def combine_results(info, extra, **kwargs):
             f = row.Frequency
 
             if group == "Muscimol":
-                spatial = (
-                    df[
-                        (df["Filename"] == row.Filename)
-                        & (df["Group"] == row.Group)
-                        & (df["Unit"] == row.Unit)
-                    ]["Directory"]
-                    .values.flatten()[0]
-                )
-                spatial = spatial[len(base_dir + os.sep):].split(os.sep)[-1]
+                spatial = df[
+                    (df["Filename"] == row.Filename)
+                    & (df["Group"] == row.Group)
+                    & (df["Unit"] == row.Unit)
+                ]["Directory"].values.flatten()[0]
+                spatial = spatial[len(base_dir + os.sep) :].split(os.sep)[-1]
                 if "before" in spatial or "next" in spatial:
                     spatial = "Regular"
                 else:
