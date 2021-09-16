@@ -46,6 +46,7 @@ def get_df(filename, describe=False):
 
     return df, control_df, lesion_df
 
+
 def get_musc_df(filename, describe=False):
     full_fname = os.path.join(summary_location, filename)
     df = df_from_file(full_fname)
@@ -266,8 +267,8 @@ def spike_lfp_stats(overall_kwargs):
     }
 
     res = mwu(
-        control_nspatial_spikes["Theta_RSC_SUB"],
-        lesion_df["Theta_RSC_SUB"],
+        control_nspatial_spikes["Theta_SFC_RSC"],
+        lesion_df["Theta_SFC_RSC"],
         t2_kwargs,
         do_plot=True,
     )
@@ -303,12 +304,12 @@ def spike_lfp_stats(overall_kwargs):
 def tmaze_stats(overall_kwargs):
     df, control_df, lesion_df = get_df("tmaze--tmaze-times_results.csv")
     bit_to_get = (control_df["part"] == "choice") & (
-        control_df["trial"] == "choice_correct"
+        control_df["trial"] == "choice correct"
     )
     control_choice = control_df[bit_to_get]
 
     bit_to_get = (lesion_df["part"] == "choice") & (
-        lesion_df["trial"] == "choice_correct"
+        lesion_df["trial"] == "choice correct"
     )
     lesion_choice = lesion_df[bit_to_get]
 
@@ -341,12 +342,12 @@ def tmaze_stats(overall_kwargs):
     process_fig(res, "t-maze_subpower_correct.pdf")
 
     bit_to_get = (control_df["part"] == "choice") & (
-        control_df["trial"] == "choice_errors"
+        control_df["trial"] == "choice errors"
     )
     control_choice = control_df[bit_to_get]
 
     bit_to_get = (lesion_df["part"] == "choice") & (
-        lesion_df["trial"] == "choice_errors"
+        lesion_df["trial"] == "choice errors"
     )
     lesion_choice = lesion_df[bit_to_get]
 
@@ -379,25 +380,23 @@ def tmaze_stats(overall_kwargs):
     process_fig(res, "t-maze_subpower_incorrect.pdf")
 
     bit_to_get = (control_df["part"] == "choice") & (
-        control_df["trial"] == "choice_correct"
+        control_df["trial"] == "choice correct"
     )
     control_choice1 = control_df[bit_to_get]
 
     bit_to_get = (control_df["part"] == "choice") & (
-        control_df["trial"] == "choice_errors"
+        control_df["trial"] == "choice errors"
     )
     control_choice2 = control_df[bit_to_get]
 
-    t3_kwargs = (
-        {
-            "value": "subicular to retronspenial LFP theta coherence during choice trials in control",
-            "group1": "correct",
-            "group2": "incorrect",
-            "show_quartiles": overall_kwargs["show_quartiles"],
-        },
-    )
+    t3_kwargs = {
+        "value": "subicular to retronspenial LFP theta coherence during choice trials in control",
+        "group1": "correct",
+        "group2": "incorrect",
+        "show_quartiles": overall_kwargs["show_quartiles"],
+    }
 
-    res = wilcoxon(
+    res = mwu(
         control_choice1["Theta_coherence"],
         control_choice2["Theta_coherence"],
         t3_kwargs,
@@ -406,25 +405,23 @@ def tmaze_stats(overall_kwargs):
     process_fig(res, "t-maze_coherence_ctrl.pdf")
 
     bit_to_get = (lesion_df["part"] == "choice") & (
-        lesion_df["trial"] == "choice_correct"
+        lesion_df["trial"] == "choice correct"
     )
     lesion_choice1 = lesion_df[bit_to_get]
 
     bit_to_get = (lesion_df["part"] == "choice") & (
-        lesion_df["trial"] == "choice_errors"
+        lesion_df["trial"] == "choice errors"
     )
     lesion_choice2 = lesion_df[bit_to_get]
 
-    t4_kwargs = (
-        {
-            "value": "subicular to retronspenial LFP theta coherence during choice trials in ATNx",
-            "group1": "correct",
-            "group2": "incorrect",
-            "show_quartiles": overall_kwargs["show_quartiles"],
-        },
-    )
+    t4_kwargs = {
+        "value": "subicular to retronspenial LFP theta coherence during choice trials in ATNx",
+        "group1": "correct",
+        "group2": "incorrect",
+        "show_quartiles": overall_kwargs["show_quartiles"],
+    }
 
-    res = wilcoxon(
+    res = mwu(
         lesion_choice1["Theta_coherence"],
         lesion_choice2["Theta_coherence"],
         t4_kwargs,
@@ -441,9 +438,7 @@ def muscimol_stats(overall_kwargs):
 
     t1_kwargs = {
         **overall_kwargs,
-        **{
-            "value": "subicular theta spike field coherence (percent)"
-        },
+        **{"value": "subicular theta spike field coherence (percent)"},
     }
 
     res = mwu(
@@ -456,14 +451,12 @@ def muscimol_stats(overall_kwargs):
 
     t2_kwargs = {
         **overall_kwargs,
-        **{
-            "value": "retrospenial theta spike field coherence (percent)"
-        },
+        **{"value": "retrospenial theta spike field coherence (percent)"},
     }
 
     res = mwu(
-        control_df["Theta_RSC_SUB"],
-        lesion_df["Theta_RSC_SUB"],
+        control_df["Theta_SFC_RSC"],
+        lesion_df["Theta_SFC_RSC"],
         t2_kwargs,
         do_plot=True,
     )
@@ -531,7 +524,7 @@ def main(show_quartiles=False):
     # 6. T-maze
     tmaze_stats(overall_kwargs_ttest)
 
-    #7. Muscimol stats
+    # 7. Muscimol stats
     muscimol_stats(overall_kwargs_musc)
 
 
