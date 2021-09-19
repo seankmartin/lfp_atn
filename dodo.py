@@ -146,3 +146,25 @@ def task_summarise_results():
         "verbosity": 0,
         "doc": action,
     }
+
+
+def task_stats():
+    base_ = here
+    dependencies = [
+        os.path.join(base_, "summarise_results.py"),
+        os.path.join(base_, "run_stats.py"),
+    ]
+    targets = []
+
+    location = os.path.abspath(os.path.join(base_, "run_stats.py"))
+    action = f"python {location}"
+
+    return {
+        "file_dep": dependencies,
+        "targets": targets,
+        "actions": [action],
+        "clean": [clean_targets],
+        "title": title_with_actions,
+        "verbosity": 0,
+        "doc": action,
+    }
