@@ -9,7 +9,7 @@ start_dir = os.path.abspath(
 
 # regex_filters should be a list of regex patterns to match against.
 regex_filters = [
-    "^t",
+    "^s",
     "(?<!nc_plots)$",
     "(?<!nc_results)$",
     "(?<!final_plots_asSVG)$",
