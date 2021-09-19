@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from skm_pyutils.py_table import list_to_df
+from skm_pyutils.py_table import list_to_df, df_to_file
 from skm_pyutils.py_plot import UnicodeGrabber
 import simuran
 import pandas as pd
@@ -19,6 +19,7 @@ def speed_vs_amp(self, lfp_signal, low_f, high_f, filter_kwargs=None, **kwargs):
     """Self represents an nc_spatial object."""
     lim = kwargs.get("range", [0, self.get_duration()])
     samples_per_sec = kwargs.get("samplesPerSec", 5)
+    do_spectrogram_plot = kwargs.get("do_spectogram_plot", False)
     do_once = True
 
     # Not filtering anymore since using relative power
@@ -100,76 +101,77 @@ def speed_vs_amp(self, lfp_signal, low_f, high_f, filter_kwargs=None, **kwargs):
     # fig, ax = plt.subplots()
     # ax.plot(bins[:-1], rate)
     # plt.show()
+    fig = None
+    if do_spectrogram_plot:
+        spectrogram_len = min(
+            kwargs.get("SpectrogramLen", 150),
+            len(lfp_samples) / lfp_signal.get_sampling_rate(),
+        )
+        high_sample = floor(spectrogram_len * lfp_signal.get_sampling_rate())
+        high_speed_sample = floor(spectrogram_len * samples_per_sec)
+        lfp_sample_to_use = lfp_samples[:high_sample]
+        f, t, Sxx = scipy.signal.spectrogram(
+            x=lfp_sample_to_use,
+            fs=lfp_signal.get_sampling_rate(),
+            nperseg=(lfp_signal.get_sampling_rate() // 2),
+            nfft=512,
+        )
+        Sxx = 10 * np.log10(Sxx / np.amax(Sxx))
+        Sxx = Sxx.flatten()
+        Sxx[np.nonzero(Sxx < -40)] = -40
+        Sxx = np.reshape(Sxx, [f.size, t.size])
+        fig, ax = plt.subplots(figsize=(16, 10))
 
-    spectrogram_len = min(
-        kwargs.get("SpectrogramLen", 150),
-        len(lfp_samples) / lfp_signal.get_sampling_rate(),
-    )
-    high_sample = floor(spectrogram_len * lfp_signal.get_sampling_rate())
-    high_speed_sample = floor(spectrogram_len * samples_per_sec)
-    lfp_sample_to_use = lfp_samples[:high_sample]
-    f, t, Sxx = scipy.signal.spectrogram(
-        x=lfp_sample_to_use,
-        fs=lfp_signal.get_sampling_rate(),
-        nperseg=(lfp_signal.get_sampling_rate() // 2),
-        nfft=512,
-    )
-    Sxx = 10 * np.log10(Sxx / np.amax(Sxx))
-    Sxx = Sxx.flatten()
-    Sxx[np.nonzero(Sxx < -40)] = -40
-    Sxx = np.reshape(Sxx, [f.size, t.size])
-    fig, ax = plt.subplots(figsize=(16, 10))
+        c_map = "magma"
+        levels = 22
+        dx = np.mean(np.diff(t))
+        dy = np.mean(np.diff(f))
+        pad_map = np.pad(Sxx[:-1, :-1], ((1, 1), (1, 1)), "edge")
+        vmin, vmax = np.nanmin(pad_map), np.nanmax(pad_map)
+        if vmax - vmin > 0.1:
+            splits = np.linspace(vmin, vmax, levels + 1)
+        else:
+            splits = np.linspace(vmin, vmin + 0.1 * levels, levels + 1)
+        splits = np.around(splits, decimals=1)
+        to_delete = []
+        for i in range(len(splits) - 1):
+            if splits[i] >= splits[i + 1]:
+                to_delete.append(i)
+        splits = np.delete(splits, to_delete)
+        x_edges = np.append(t - dx / 2, t[-1] + dx / 2)
+        y_edges = np.append(f - dy / 2, f[-1] + dy / 2)
+        pcm = ax.contourf(
+            x_edges, y_edges, pad_map, levels=splits, cmap=c_map, corner_mask=True
+        )
 
-    c_map = "magma"
-    levels = 22
-    dx = np.mean(np.diff(t))
-    dy = np.mean(np.diff(f))
-    pad_map = np.pad(Sxx[:-1, :-1], ((1, 1), (1, 1)), "edge")
-    vmin, vmax = np.nanmin(pad_map), np.nanmax(pad_map)
-    if vmax - vmin > 0.1:
-        splits = np.linspace(vmin, vmax, levels + 1)
-    else:
-        splits = np.linspace(vmin, vmin + 0.1 * levels, levels + 1)
-    splits = np.around(splits, decimals=1)
-    to_delete = []
-    for i in range(len(splits) - 1):
-        if splits[i] >= splits[i + 1]:
-            to_delete.append(i)
-    splits = np.delete(splits, to_delete)
-    x_edges = np.append(t - dx / 2, t[-1] + dx / 2)
-    y_edges = np.append(f - dy / 2, f[-1] + dy / 2)
-    pcm = ax.contourf(
-        x_edges, y_edges, pad_map, levels=splits, cmap=c_map, corner_mask=True
-    )
+        # pcm = ax.pcolormesh(
+        #     t, f, Sxx, cmap=c_map, edgecolors="none", rasterized=True, shading="auto"
+        # )
+        ax.set_xlim(t.min(), t.max())
+        ax.set_ylim(0, 30)
+        simuran.despine()
 
-    # pcm = ax.pcolormesh(
-    #     t, f, Sxx, cmap=c_map, edgecolors="none", rasterized=True, shading="auto"
-    # )
-    ax.set_xlim(t.min(), t.max())
-    ax.set_ylim(0, 30)
-    simuran.despine()
+        plt.colorbar(pcm, ax=ax, use_gridspec=True)
 
-    plt.colorbar(pcm, ax=ax, use_gridspec=True)
+        ax.set_xlabel("Time (sec)")
+        ax.set_ylabel("Frequency (Hz)")
 
-    ax.set_xlabel("Time (sec)")
-    ax.set_ylabel("Frequency (Hz)")
-
-    # ax2 = ax.twinx()
-    ax.plot(
-        time_to_use[:high_speed_sample],
-        0.25 * avg_speed[:high_speed_sample],
-        c="k",
-        alpha=1,
-        linewidth=3,
-    )
-    # ax2.set_ylabel("Speed (cm / s)")
-    # ax2.set_ylim(0, np.max(avg_speed))
+        # ax2 = ax.twinx()
+        ax.plot(
+            time_to_use[:high_speed_sample],
+            0.25 * avg_speed[:high_speed_sample],
+            c="k",
+            alpha=1,
+            linewidth=3,
+        )
+        # ax2.set_ylabel("Speed (cm / s)")
+        # ax2.set_ylim(0, np.max(avg_speed))
 
     pd_df = list_to_df(
         [avg_speed, lfp_amplitudes], transpose=True, headers=["Speed", "LFP amplitude"]
     )
     pd_df = pd_df[pd_df["Speed"] <= max_speed]
-    pd_df["Speed"] = np.around(pd_df["Speed"])
+    pd_df["RoundedSpeed"] = np.around(pd_df["Speed"])
 
     return pd_df, fig
 
@@ -190,6 +192,7 @@ def speed_lfp_amp(
         recording.signals, 0.5, 100, method_kwargs=clean_kwargs
     )["signals"]
     fmt = kwargs.get("image_format", "png")
+    do_spectrogram_plot = kwargs.get("do_spectogram_plot", False)
 
     # Single values
     spatial = recording.spatial.underlying
@@ -211,17 +214,23 @@ def speed_lfp_amp(
 
         # Speed vs LFP power
         pd_df, sfig = speed_vs_amp(
-            spatial, lfp_signal, fmin, fmax, samplesPerSec=speed_sr
+            spatial,
+            lfp_signal,
+            fmin,
+            fmax,
+            samplesPerSec=speed_sr,
+            do_spectrogram_plot=do_spectrogram_plot,
         )
 
-        out_name = basename + "_speed_theta_spectogram_{}".format(name)
-        sfig = simuran.SimuranFigure(sfig, out_name, dpi=400, done=True, format=fmt)
-        figures.append(sfig)
+        if do_spectrogram_plot:
+            out_name = basename + "_speed_theta_spectogram_{}".format(name)
+            sfig = simuran.SimuranFigure(sfig, out_name, dpi=400, done=True, format=fmt)
+            figures.append(sfig)
 
         results[f"{name}_df"] = pd_df
 
         fig, ax = plt.subplots()
-        sns.lineplot(data=pd_df, x="Speed", y="LFP amplitude", ax=ax)
+        sns.lineplot(data=pd_df, x="RoundedSpeed", y="LFP amplitude", ax=ax)
         simuran.despine()
         fname = basename + "_speed_theta_corr_{}".format(name)
         speed_amp_fig = simuran.SimuranFigure(
@@ -295,8 +304,11 @@ def combine_results(info, extra_info, **kwargs):
         n_lesion_animals += r_les / len(fname_list)
 
     simuran.print(f"{n_ctrl_animals} CTRL animals, {n_lesion_animals} Lesion animals")
-
+    
+    out_dfname = os.path.join(out_dir, "summary", "speed_results.csv")
     df = pd.concat(df_lists, ignore_index=True)
+    df_to_file(df, out_dfname)
+
     df.replace("Control", f"Control (ATN,   N = {int(n_ctrl_animals)})", inplace=True)
     df.replace("Lesion", f"Lesion  (ATNx, N = {int(n_lesion_animals)})", inplace=True)
 
@@ -304,11 +316,11 @@ def combine_results(info, extra_info, **kwargs):
 
     control_df = df[df["Group"] == f"Lesion  (ATNx, N = {int(n_lesion_animals)})"]
     sub_df = control_df[control_df["region"] == "RSC"]
-    simuran.print(sub_df.groupby("Speed").mean())
+    simuran.print(sub_df.groupby("RoundedSpeed").mean())
     for ci, oname in zip([95, None], ["_ci", ""]):
         sns.lineplot(
             data=df[df["region"] == "SUB"],
-            x="Speed",
+            x="RoundedSpeed",
             y="LFP amplitude",
             style="Group",
             hue="Group",
@@ -333,7 +345,7 @@ def combine_results(info, extra_info, **kwargs):
 
         sns.lineplot(
             data=df[df["region"] == "RSC"],
-            x="Speed",
+            x="RoundedSpeed",
             y="LFP amplitude",
             style="Group",
             hue="Group",
