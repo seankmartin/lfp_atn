@@ -36,7 +36,7 @@ def set_file_locations():
             (
                 os.path.join("__thisdirname__", "..", "batch_params", val),
                 os.path.join(
-                    "__thisdirname__", "..", "functions", "fn_list_recordings.py"
+                    "__thisdirname__", "..", "functions", "fn_spectra.py"
                 ),
                 "_{}".format(val)[:-3],
             )
