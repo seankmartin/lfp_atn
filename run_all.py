@@ -10,7 +10,8 @@ tasks_to_run = [
     "doit muscimol_sta",
     "doit speed_ibi",
     "doit spike_lfp",
-    "doit summarise_results"
+    "doit summarise_results",
+    "doit stats"
 ]
 
 start_time = time()
