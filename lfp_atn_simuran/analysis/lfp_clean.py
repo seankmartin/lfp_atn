@@ -464,7 +464,7 @@ class LFPClean(object):
 
             if os.path.exists(fname):
                 print("Loading ICA from {}".format(fname))
-                ica = read_ica(fname, verbose=False)
+                ica = read_ica(fname, verbose="ERROR")
                 loaded = True
                 print(ica.exclude)
 
