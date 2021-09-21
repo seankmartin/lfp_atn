@@ -26,6 +26,8 @@ INSTALL_REQUIRES = [
     "tqdm",
     "doit",
     "fooof",
+    "numexpr",
+    "python-picard"
 ]
 
 CLASSIFIERS = [
