@@ -149,7 +149,7 @@ def powers(
     clean_kwargs = kwargs.get("clean_kwargs", {})
     lc = LFPClean(method=clean_method, visualise=False)
     signals_grouped_by_region = lc.clean(
-        recording.signals, fmin, fmax, method_kwargs=clean_kwargs
+        recording, fmin, fmax, method_kwargs=clean_kwargs
     )["signals"]
     fmt = kwargs.get("image_format", "png")
     psd_scale = kwargs.get("psd_scale", "volts")

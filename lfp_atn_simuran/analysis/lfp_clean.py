@@ -1,10 +1,13 @@
 """Clean LFP signals."""
+
+import os
 from collections import OrderedDict
 from copy import deepcopy
 
 import numpy as np
 import simuran
-from mne.preprocessing import ICA
+import astropy.units as u
+from mne.preprocessing import ICA, read_ica
 
 
 def detect_outlying_signals(signals, z_threshold=1.1):
@@ -231,16 +234,21 @@ class LFPClean(object):
         results = {"signals": {}, "fig": None, "cleaned": None, "zscored": None}
         if method_kwargs is None:
             method_kwargs = {}
+        ica_fname = None
         if isinstance(data, simuran.Recording):
             signals = data.signals
+            base_dir = method_kwargs.get("base_dir", None)
+            ica_fname = data.get_name_for_save(base_dir)
             for i in range(len(signals)):
                 signals[i].load()
         else:
             signals = data
 
+        highpass = 0.0
         if min_f is not None:
             filter_kwargs["verbose"] = filter_kwargs.get("verbose", "WARNING")
             signals = self.filter_sigs(signals, min_f, max_f, **filter_kwargs)
+            highpass = min_f
 
         if self.method == "avg":
             z_threshold = method_kwargs.get("z_threshold", 1.1)
@@ -268,7 +276,20 @@ class LFPClean(object):
                 signals, min_f, max_f, clean=False, **filter_kwargs
             )
         elif self.method == "ica":
-            reconst, result = self.ica_method(signals)
+            channels = method_kwargs.get("channels")
+            prop = method_kwargs.get("pick_property", "channel")
+            manual_ica = method_kwargs.get("manual_ica", False)
+            if channels is not None:
+                idxs = [
+                    i
+                    for i in range(len(signals))
+                    if getattr(signals[i], prop) in channels
+                ]
+            else:
+                idxs = None
+            reconst, result = self.ica_method(
+                signals, chans_to_pick=idxs, ica_fname=ica_fname, manual=manual_ica, highpass=highpass,
+            )
             results["cleaned"] = reconst
         elif self.method == "pick":
             channels = method_kwargs.get("channels")
@@ -402,7 +423,16 @@ class LFPClean(object):
 
         return output_dict, bad_chans
 
-    def ica_method(self, signals, exclude=None):
+    def ica_method(
+        self,
+        signals,
+        exclude=None,
+        chans_to_pick=None,
+        save=True,
+        ica_fname=None,
+        manual=True,
+        highpass=0.0
+    ):
         skip_plots = not self.visualise
         if not isinstance(signals, simuran.EegArray):
             eeg_array = simuran.EegArray()
@@ -411,34 +441,79 @@ class LFPClean(object):
         regions = list(set([s.region for s in signals]))
 
         mne_array = signals.convert_signals_to_mne(verbose=False)
-        ica = ICA(method="fastica", random_state=42)
-        ica.fit(mne_array)
+        mne_array.info['highpass'] = highpass
 
-        if exclude is None:
-            # Plot raw ICAs
-            ica.plot_sources(mne_array)
+        loaded = False
+        if save:
+            home = os.path.abspath(os.path.expanduser("~"))
+            default_save_location = os.path.join(home, ".skm_python", "ICA_files")
+            os.makedirs(default_save_location, exist_ok=True)
+            bit = "-auto"
+            if manual:
+                bit = ""
+            if ica_fname is None:
+                ica_fname = (
+                    os.path.splitext(os.path.basename(signals[0].source_file))[0]
+                    + f"{bit}-ica.fif.gz"
+                )
+            elif not ica_fname.endswith("-ica.fif.gz"):
+                if not ica_fname.endswith("-ica.fif"):
+                    ica_fname = os.path.splitext(ica_fname)[0] + f"{bit}-ica.fif.gz"
 
-            cont = input("Plot region overlay? (y|n) \n")
-            if cont.strip().lower() == "y":
-                reg_grps = []
-                for reg in regions:
-                    temp_grp = []
-                    for ch in mne_array.info.ch_names:
-                        if reg in ch:
-                            temp_grp.append(ch)
-                    reg_grps.append(temp_grp)
-                for grps in reg_grps:
-                    ica.plot_overlay(
-                        mne_array,
-                        stop=int(30 * 250),
-                        title="{}".format(grps[0][:3]),
-                        picks=grps,
-                    )
-        else:
-            # ICAs to exclude
-            ica.exclude = exclude
-            if not skip_plots:
-                ica.plot_sources(mne_array)
+            fname = os.path.join(default_save_location, ica_fname)
+
+            if os.path.exists(fname):
+                print("Loading ICA from {}".format(fname))
+                ica = read_ica(fname, verbose=False)
+                loaded = True
+                print(ica.exclude)
+
+        if not loaded:
+            ica = ICA(
+                method="picard",
+                random_state=42,
+                max_iter="auto",
+                fit_params=dict(ortho=True, extended=True),
+                n_components=None,
+            )
+
+            ica.fit(mne_array)
+            if manual:
+
+                if exclude is None:
+                    # Plot raw ICAs
+                    ica.plot_sources(mne_array)
+
+                    cont = input("Plot region overlay? (y|n) \n")
+                    if cont.strip().lower() == "y":
+                        reg_grps = []
+                        for reg in regions:
+                            temp_grp = []
+                            for ch in mne_array.info.ch_names:
+                                if reg in ch:
+                                    temp_grp.append(ch)
+                            reg_grps.append(temp_grp)
+                        for grps in reg_grps:
+                            ica.plot_overlay(
+                                mne_array,
+                                stop=int(30 * 250),
+                                title="{}".format(grps[0][:3]),
+                                picks=grps,
+                            )
+                else:
+                    # ICAs to exclude
+                    ica.exclude = exclude
+                    if not skip_plots:
+                        ica.plot_sources(mne_array)
+
+            else:
+                end_time = min(120.0, signals[0].get_end().value)
+                ica = ica.detect_artifacts(
+                    mne_array, start_find=20.0, stop_find=end_time
+                )
+
+        if save:
+            ica.save(fname)
 
         # Apply ICA exclusion
         reconst_raw = mne_array.copy()
@@ -476,9 +551,23 @@ class LFPClean(object):
                 scalings=dict(eeg=350e-6),
             )
 
-        result = average_signals(reconst_raw.get_data(), clean=False)
+        output_dict = OrderedDict()
 
-        return reconst_raw, result
+        signals_grouped_by_region = signals.split_into_groups("region")
+        for region, (signals, idxs) in signals_grouped_by_region.items():
+            if chans_to_pick is not None:
+                idxs_to_use = [x for x in idxs if x in chans_to_pick]
+            else:
+                idxs_to_use = idxs
+            data_to_use = reconst_raw.get_data()[idxs_to_use]
+            val, _ = average_signals(data_to_use, clean=False)
+            eeg = simuran.Eeg()
+            eeg.from_numpy(val * u.V, sampling_rate=signals[0].sampling_rate)
+            eeg.set_region(region)
+            eeg.set_channel("avg")
+            output_dict[region] = eeg
+
+        return reconst_raw, output_dict
 
     def filter_sigs(self, signals, min_f, max_f, **filter_kwargs):
         eeg_array = simuran.EegArray()
