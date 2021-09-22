@@ -10,6 +10,7 @@ tasks_to_run = [
     "doit muscimol_sta",
     "doit speed_ibi",
     "doit spike_lfp",
+    "doit tmaze",
     "doit summarise_results",
     "doit stats"
 ]
