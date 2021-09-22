@@ -20,4 +20,18 @@ def mne_plot(recording, base_dir, figures, **kwargs):
     )
     figures.append(SimuranFigure(fig, out_name, dpi=100, format=img_format, done=True))
 
+    ica_figs = result.get("ica_figs", [])
+    if len(ica_figs) != 0:
+        f1, f2 = ica_figs
+        figures.append(
+            SimuranFigure(
+                f1, out_name + "--excluded", dpi=100, format=img_format, done=True
+            )
+        )
+        figures.append(
+            SimuranFigure(
+                f2, out_name + "--cleaned", dpi=100, format=img_format, done=True
+            )
+        )
+
     return result["bad_channels"]

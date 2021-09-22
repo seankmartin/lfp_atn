@@ -231,7 +231,13 @@ class LFPClean(object):
 
         """
         bad_chans = None
-        results = {"signals": {}, "fig": None, "cleaned": None, "zscored": None}
+        results = {
+            "signals": {},
+            "fig": None,
+            "cleaned": None,
+            "zscored": None,
+            "bad_channels": bad_chans,
+        }
         if method_kwargs is None:
             method_kwargs = {}
         ica_fname = None
@@ -285,12 +291,21 @@ class LFPClean(object):
                     for i in range(len(signals))
                     if getattr(signals[i], prop) in channels
                 ]
+                bad_chans = [
+                    s.channel for s in signals if getattr(s, prop) not in channels
+                ]
+                results["bad_channels"] = bad_chans
             else:
                 idxs = None
-            reconst, result = self.ica_method(
-                signals, chans_to_pick=idxs, ica_fname=ica_fname, manual=manual_ica, highpass=highpass,
+            reconst, result, figs = self.ica_method(
+                signals,
+                chans_to_pick=idxs,
+                ica_fname=ica_fname,
+                manual=manual_ica,
+                highpass=highpass,
             )
             results["cleaned"] = reconst
+            results["ica_figs"] = figs
         elif self.method == "pick":
             channels = method_kwargs.get("channels")
             prop = method_kwargs.get("pick_property", "channel")
@@ -431,9 +446,10 @@ class LFPClean(object):
         save=True,
         ica_fname=None,
         manual=True,
-        highpass=0.0
+        highpass=0.0,
     ):
         skip_plots = not self.visualise
+        show = self.show_vis
         if not isinstance(signals, simuran.EegArray):
             eeg_array = simuran.EegArray()
             eeg_array.set_container([simuran.Eeg(signal=eeg) for eeg in signals])
@@ -441,7 +457,7 @@ class LFPClean(object):
         regions = list(set([s.region for s in signals]))
 
         mne_array = signals.convert_signals_to_mne(verbose=False)
-        mne_array.info['highpass'] = highpass
+        mne_array.info["highpass"] = highpass
 
         loaded = False
         if save:
@@ -530,28 +546,64 @@ class LFPClean(object):
             ica.apply(exclude_raw)
 
             # Plot excluded ICAs
-            exclude_raw.plot(
+            scalings = dict(
+                mag=1e-12,
+                grad=4e-11,
+                eeg=20e-6,
+                eog=150e-6,
+                ecg=5e-4,
+                emg=1e-3,
+                ref_meg=1e-12,
+                misc=1e-3,
+                stim=1,
+                resp=1,
+                chpi=1e-4,
+                whitened=1e2,
+            )
+            max_val = 1.8 * np.max(np.abs(exclude_raw.get_data(stop=100)))
+            scalings["eeg"] = max_val
+
+            f1 = exclude_raw.plot(
                 block=True,
-                show=True,
+                show=show,
                 clipping="transparent",
-                duration=50,
-                title="Excluded ICs from {}".format(signals[0].source_file),
+                duration=100,
+                title="LFP signal excluded from {}".format(signals[0].source_file),
                 remove_dc=False,
-                scalings=dict(eeg=350e-6),
+                scalings=scalings,
             )
 
+            scalings = dict(
+                mag=1e-12,
+                grad=4e-11,
+                eeg=20e-6,
+                eog=150e-6,
+                ecg=5e-4,
+                emg=1e-3,
+                ref_meg=1e-12,
+                misc=1e-3,
+                stim=1,
+                resp=1,
+                chpi=1e-4,
+                whitened=1e2,
+            )
+            max_val = 1.8 * np.max(np.abs(reconst_raw.get_data(stop=100)))
+            scalings["eeg"] = max_val
+
             # Plot reconstructed signals w/o excluded ICAs
-            reconst_raw.plot(
+            f2 = reconst_raw.plot(
                 block=True,
-                show=True,
+                show=show,
                 clipping="transparent",
-                duration=50,
+                duration=100,
                 title="Reconstructed LFP Data from {}".format(signals[0].source_file),
                 remove_dc=False,
-                scalings=dict(eeg=350e-6),
+                scalings=scalings,
             )
 
         output_dict = OrderedDict()
+
+        figs = [f1, f2]
 
         signals_grouped_by_region = signals.split_into_groups("region")
         for region, (signals, idxs) in signals_grouped_by_region.items():
@@ -567,7 +619,7 @@ class LFPClean(object):
             eeg.set_channel("avg")
             output_dict[region] = eeg
 
-        return reconst_raw, output_dict
+        return reconst_raw, output_dict, figs
 
     def filter_sigs(self, signals, min_f, max_f, **filter_kwargs):
         eeg_array = simuran.EegArray()
