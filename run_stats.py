@@ -143,9 +143,9 @@ def coherence_stats(overall_kwargs):
 
 def speed_stats(overall_kwargs):
     pt("Open field Speed LFP power relationship")
-    df, control_df, lesion_df = get_df("merged_speed.csv")
-
-    t1_kwargs = {
+    df_loc = os.path.join(results_dir, "summary", "speed_results.csv")
+    speed_df = df_from_file(df_loc)
+    test_kwargs = {
         **overall_kwargs,
         **{
             "group": "in control",
@@ -155,16 +155,16 @@ def speed_stats(overall_kwargs):
             "offset": 0,
         },
     }
+    speed_df_sub = speed_df[speed_df["region"] == "SUB"]
+    speed_ctrl = speed_df_sub[speed_df_sub["Group"] == "Control"]
     res = corr(
-        control_df["SUB_theta_rel"],
-        control_df["results_speed_lfp_amp_mean_speed"],
-        fmt_kwargs=t1_kwargs,
-        do_plot=True,
-        method="spearman",
+        speed_ctrl["Speed"],
+        speed_ctrl["LFP amplitude"],
+        test_kwargs,
+        do_plot=False,
     )
-    process_fig(res, "control_speed_corr.pdf")
 
-    t2_kwargs = {
+    test_kwargs = {
         **overall_kwargs,
         **{
             "group": "in ATNx",
@@ -174,14 +174,14 @@ def speed_stats(overall_kwargs):
             "offset": 0,
         },
     }
+    speed_df_sub = speed_df[speed_df["region"] == "SUB"]
+    speed_ctrl = speed_df_sub[speed_df_sub["Group"] == "Lesion"]
     res = corr(
-        lesion_df["SUB_theta_rel"],
-        lesion_df["results_speed_lfp_amp_mean_speed"],
-        fmt_kwargs=t2_kwargs,
-        do_plot=True,
-        method="spearman",
+        speed_ctrl["Speed"],
+        speed_ctrl["LFP amplitude"],
+        test_kwargs,
+        do_plot=False,
     )
-    process_fig(res, "lesion_speed_corr.pdf")
 
 
 def ibi_stats(overall_kwargs):
