@@ -2,6 +2,7 @@ import os
 from math import floor, ceil
 from pprint import pprint
 import csv
+import argparse
 
 import simuran
 import pandas as pd
@@ -11,6 +12,7 @@ from neurochat.nc_lfp import NLfp
 import numpy as np
 from scipy.signal import coherence
 from skm_pyutils.py_table import list_to_df, df_from_file, df_to_file
+from skm_pyutils.py_config import parse_args
 import seaborn as sns
 from scipy.signal import welch
 
@@ -95,7 +97,8 @@ def main(
     base_dir_new = os.path.dirname(excel_location)
     here = os.path.dirname(os.path.abspath(__file__))
     decoding_loc = out_name = os.path.join(
-        here, "..", "sim_results", "tmaze", "lfp_decoding.csv")
+        here, "..", "sim_results", "tmaze", "lfp_decoding.csv"
+    )
     lfp_len = 6
     hf = lfp_len // 2
     new_lfp = np.zeros(shape=(num_rows // 2, lfp_len))
@@ -577,19 +580,41 @@ def main(
     if do_decoding:
         groups = np.array(groups)
         labels = np.array(choices)
-        decoding(new_lfp, groups, labels, os.path.join(
-            here, "..", "sim_results", "tmaze")
+        decoding(
+            new_lfp, groups, labels, os.path.join(here, "..", "sim_results", "tmaze")
+        )
 
 
 if __name__ == "__main__":
     here_main = os.path.dirname(os.path.abspath(__file__))
     main_output_location = os.path.join(here_main, "results")
 
-    main_base_dir = r"D:\SubRet_recordings_imaging"
     main_xls_location = os.path.join(main_output_location, "tmaze-times.csv")
 
-    cfg_path = os.path.abspath(os.path.join(here_main, "..", "configs", "default.py"))
-    simuran.set_config_path(cfg_path)
+    parser = argparse.ArgumentParser(description="Tmaze arguments")
+    parser.add_argument(
+        "--config",
+        "-cfg",
+        type=str,
+        default="default.py",
+        help="path to the configuration file, default.py by default.",
+    )
+    parser.add_argument(
+        "--main_dir",
+        "-d",
+        type=str,
+        default="",
+        help="The name of the base directory for the data.",
+    )
+    parsed = parse_args(parser, verbose=False)
+
+    cfg_name = parsed.config
+
+    if not os.path.exists(cfg_name):
+        cfg_path = os.path.abspath(os.path.join(here_main, "..", "configs", cfg_name))
+    else:
+        cfg_path = cfg_name
+    main_base_dir = parsed.main_dir
 
     main_plot_individual_sessions = False
     main_do_coherence = True

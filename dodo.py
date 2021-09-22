@@ -102,8 +102,8 @@ def task_tmaze():
     ]
     targets = [os.path.join(base_, "results", "tmaze-times_results.xlsx")]
 
-    location = os.path.abspath(os.path.join(base_, "tmaze_analyse.py"))
-    action = f"python {location}"
+    location = os.path.abspath(os.path.join(base_, "t_maze_analyse.py"))
+    action = f"python {location} -cfg {main_cfg_path} -d {dirname}"
 
     return {
         "file_dep": dependencies,
