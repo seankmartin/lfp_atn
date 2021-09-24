@@ -606,6 +606,12 @@ if __name__ == "__main__":
         default="",
         help="The name of the base directory for the data.",
     )
+    parser.add_argument(
+        "--overwrite",
+        "-o",
+        action="store_true",
+        help="Whether to overwrite existing output",
+    )
     parsed = parse_args(parser, verbose=False)
 
     cfg_name = parsed.config
@@ -618,9 +624,9 @@ if __name__ == "__main__":
 
     main_plot_individual_sessions = False
     main_do_coherence = True
-    main_do_decoding = True
+    main_do_decoding = False
 
-    main_overwrite = True
+    main_overwrite = parsed.overwrite
     main(
         main_xls_location,
         main_base_dir,

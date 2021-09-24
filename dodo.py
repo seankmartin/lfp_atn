@@ -104,6 +104,8 @@ def task_tmaze():
 
     location = os.path.abspath(os.path.join(base_, "t_maze_analyse.py"))
     action = f"python {location} -cfg {main_cfg_path} -d {dirname}"
+    if overwrite:
+        action += " -o"
 
     return {
         "file_dep": dependencies,
