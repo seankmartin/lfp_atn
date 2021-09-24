@@ -309,12 +309,12 @@ def combine_results(info, extra_info, **kwargs):
     df = pd.concat(df_lists, ignore_index=True)
     df_to_file(df, out_dfname)
 
-    df.replace("Control", f"Control (ATN,   N = {int(n_ctrl_animals)})", inplace=True)
-    df.replace("Lesion", f"Lesion  (ATNx, N = {int(n_lesion_animals)})", inplace=True)
+    df.replace("Control", f"Control", inplace=True)
+    df.replace("Lesion", f"ATNx (Lesion)", inplace=True)
 
     simuran.print("Saving plots to {}".format(os.path.join(out_dir, "summary")))
 
-    control_df = df[df["Group"] == f"Lesion  (ATNx, N = {int(n_lesion_animals)})"]
+    control_df = df[df["Group"] == f"ATNx (Lesion)"]
     sub_df = control_df[control_df["region"] == "RSC"]
     simuran.print(sub_df.groupby("RoundedSpeed").mean())
     for ci, oname in zip([95, None], ["_ci", ""]):

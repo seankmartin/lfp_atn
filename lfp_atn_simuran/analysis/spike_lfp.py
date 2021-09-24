@@ -314,7 +314,7 @@ def combine_results(info, extra, **kwargs):
                 ]["Directory"].values.flatten()[0]
                 spatial = spatial[len(base_dir + os.sep) :].split(os.sep)[-1]
                 if "before" in spatial or "next" in spatial:
-                    spatial = "Regular"
+                    spatial = "Control"
                 else:
                     spatial = "Muscimol"
             else:
@@ -368,14 +368,23 @@ def combine_results(info, extra, **kwargs):
         plt.close(fig)
 
         fig, ax = plt.subplots()
-        sns.lineplot(
-            data=df2,
-            x="Frequency (Hz)",
-            y="SFC",
-            ax=ax,
-            style="Group",
-            hue="Spatial",
-        )
+        if "Muscimol" in df2["Group"]:
+            sns.lineplot(
+                data=df2,
+                x="Frequency (Hz)",
+                y="SFC",
+                ax=ax,
+                hue="Spatial",
+            )
+        else:
+            sns.lineplot(
+                data=df2,
+                x="Frequency (Hz)",
+                y="SFC",
+                ax=ax,
+                style="Group",
+                hue="Spatial",
+            )
         simuran.despine()
         ax.set_ylabel("Spike field coherence")
         name = f"average_sfc_{out_region}"

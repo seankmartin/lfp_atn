@@ -212,7 +212,7 @@ def plot_all_spectrum(info, out_dir, name, **kwargs):
         peaks = fg.get_params("peak_params", 0)[:, 0]
 
         for p in peaks:
-            peaks_data.append([p, "Lesion", r])
+            peaks_data.append([p, "ATNx (Lesion)", r])
 
     peaks_df = list_to_df(peaks_data, headers=["Peak frequency", "Group", "Region"])
 
@@ -276,8 +276,8 @@ def plot_all_lfp(info, out_dir, name, **kwargs):
 
     data = np.concatenate(parsed_info, axis=1)
     df = pd.DataFrame(data.transpose(), columns=["frequency", "coherence", "Group"])
-    df.replace("Control", "Control (ATN,   N = 6)", inplace=True)
-    df.replace("Lesion", "Lesion  (ATNx, N = 5)", inplace=True)
+    df.replace("Control", "Control", inplace=True)
+    df.replace("Lesion", "ATNx (Lesion)", inplace=True)
     df[["frequency", "coherence"]] = df[["frequency", "coherence"]].apply(pd.to_numeric)
 
     sns.lineplot(
