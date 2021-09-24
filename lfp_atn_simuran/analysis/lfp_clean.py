@@ -601,9 +601,11 @@ class LFPClean(object):
                 scalings=scalings,
             )
 
-        output_dict = OrderedDict()
+            figs = [f1, f2]
+        else:
+            figs = [None, None]
 
-        figs = [f1, f2]
+        output_dict = OrderedDict()
 
         signals_grouped_by_region = signals.split_into_groups("region")
         for region, (signals, idxs) in signals_grouped_by_region.items():
