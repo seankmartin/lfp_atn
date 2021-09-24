@@ -352,7 +352,13 @@ def combine_results(info, extra, **kwargs):
 
         fig, ax = plt.subplots()
         sns.lineplot(
-            data=df1, x="Time (s)", y="STA", ax=ax, style="Group", hue="Spatial"
+            data=df1,
+            x="Time (s)",
+            y="STA",
+            ax=ax,
+            style="Group",
+            hue="Spatial",
+            ci=None,
         )
         simuran.despine()
         mc = UnicodeGrabber.get("micro")
@@ -363,7 +369,12 @@ def combine_results(info, extra, **kwargs):
 
         fig, ax = plt.subplots()
         sns.lineplot(
-            data=df2, x="Frequency (Hz)", y="SFC", ax=ax, style="Group", hue="Spatial"
+            data=df2,
+            x="Frequency (Hz)",
+            y="SFC",
+            ax=ax,
+            style="Group",
+            hue="Spatial",
         )
         simuran.despine()
         ax.set_ylabel("Spike field coherence")
