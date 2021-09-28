@@ -79,9 +79,10 @@ def main(
     theta_max = cfg["theta_max"]
     clean_method = cfg["clean_method"]
     clean_kwargs = cfg["clean_kwargs"]
+
     window_sec = 0.5
-    fmin, fmax = 0.5, 40
-    max_lfp_lengths_seconds = {"start": 20, "choice": (2.5, 0.5), "end": 10}
+    fmin, fmax = 2.0, 40
+    max_lfp_lengths_seconds = {"start": 20, "choice": (3.5, 0.5), "end": 10}
 
     ituples = df.itertuples()
     num_rows = len(df)
@@ -111,6 +112,10 @@ def main(
     oname_power_tmaze = os.path.join(
         here, "..", "sim_results", "tmaze", "power_tmaze_full.csv"
     )
+    split = os.path.splitext(os.path.basename(excel_location))
+    o_name_res = os.path.join(
+        here, "..", "sim_results", "tmaze", split[0] + "_results" + split[1]
+    )
 
     # Load existing data if instructed to and it exists
     os.makedirs(os.path.dirname(oname_coherence), exist_ok=True)
@@ -130,6 +135,7 @@ def main(
 
         coherence_df = df_from_file(oname_coherence)
         power_df = df_from_file(oname_power_tmaze)
+        res_df = df_from_file(o_name_res)
 
     ## Extract LFP, do coherence, and plot
     if not skip:
@@ -155,6 +161,8 @@ def main(
             x = np.array(sig_dict["SUB"].samples.to(u.mV))
             duration = len(x) / 250
             y = np.array(sig_dict["RSC"].samples.to(u.mV))
+            fig, ax = plt.subplots()
+
             fs = sig_dict["SUB"].sampling_rate
 
             # Setup and loading done -- Analyse the t-maze data
@@ -189,7 +197,7 @@ def main(
                 # Parse out the times
                 t1, t2, t3 = r.start, r.choice, r.end
 
-                # Make sure there are no parsing errors
+                # Make sure there are no parsing Incorrect
                 if t3 > duration:
                     raise RuntimeError(
                         "Last time {} greater than duration {}".format(t3, duration)
@@ -318,7 +326,7 @@ def main(
                         x = np.array(sub_s.samples[lfpt1:lfpt2].to(u.mV))
                         y = np.array(rsc_s.samples[lfpt1:lfpt2].to(u.mV))
 
-                        f, Cxy = coherence(x, y, fs, nperseg=window_sec * 250)
+                        f, Cxy = coherence(x, y, fs, nperseg=window_sec * 250, nfft=256)
                         f = f[np.nonzero((f >= fmin) & (f <= fmax))]
                         Cxy = Cxy[np.nonzero((f >= fmin) & (f <= fmax))]
 
@@ -335,13 +343,16 @@ def main(
                         max_theta_coherence = np.nanmean(theta_co)
                         max_delta_coherence = np.nanmean(delta_co)
 
+                        theta_co_peak = Cxy[np.nonzero((f >= 12.0) & (f <= 13.0))]
+                        peak_theta_coherence = np.nanmax(theta_co_peak)
+
                         if trial_type == "forced":
-                            final_trial_type = "forced"
+                            final_trial_type = "Forced"
                         else:
                             if r.passed.strip().upper() == "Y":
-                                final_trial_type = "choice correct"
+                                final_trial_type = "Correct"
                             elif r.passed.strip().upper() == "N":
-                                final_trial_type = "choice errors"
+                                final_trial_type = "Incorrect"
                             else:
                                 final_trial_type = "ERROR IN ANALYSIS"
 
@@ -361,8 +372,11 @@ def main(
                             res_dict[f"RSC-{k}_theta"],
                         ]
                         res_list += [max_theta_coherence, max_delta_coherence]
-                        res_list += [max_theta_coherence_, max_delta_coherence_]
-                        results.append(res_list)
+                        res_list += [
+                            max_theta_coherence_,
+                            max_delta_coherence_,
+                            peak_theta_coherence,
+                        ]
 
                         if no_pass is False:
                             group = (
@@ -415,6 +429,8 @@ def main(
                                             final_trial_type,
                                         ]
                                     )
+                        res_list += [group]
+                        results.append(res_list)
 
                     name = os.path.splitext(r.location)[0]
                     if plot_individual_sessions:
@@ -463,6 +479,8 @@ def main(
             "Delta_coherence",
             "Full_theta_coherence",
             "Full_delta_coherence",
+            "Peak 12Hz Theta coherence",
+            "Group",
         ]
 
         res_df = pd.DataFrame(results, columns=headers)
@@ -504,10 +522,46 @@ def main(
 
     if do_coherence or skip:
 
+        simuran.set_plot_style()
+        # res_df["ID"] = res_df["trial"] + "_" + res_df["part"]
+        res_df = res_df[res_df["part"] == "choice"]
+        sns.barplot(
+            data=res_df,
+            x="trial",
+            y="Theta_coherence",
+            hue="Group",
+            estimator=np.median,
+        )
+        plt.xlabel("Trial result")
+        plt.ylabel("Theta coherence")
+        plt.tight_layout()
+        plt.savefig(
+            os.path.join(here, "..", "sim_results", "tmaze", f"bar--coherence.pdf"),
+            dpi=400,
+        )
+        plt.close("all")
+
+        sns.barplot(
+            data=res_df,
+            x="trial",
+            y="Delta_coherence",
+            hue="Group",
+            estimator=np.median,
+        )
+        plt.xlabel("Trial result")
+        plt.ylabel("Delta coherence")
+        plt.tight_layout()
+        plt.savefig(
+            os.path.join(
+                here, "..", "sim_results", "tmaze", f"bar--coherence--delta.pdf"
+            ),
+            dpi=400,
+        )
+        plt.close("all")
+
         for group in ("Control", "Lesion (ATNx)"):
             coherence_df_sub = coherence_df[coherence_df["Group"] == group]
             power_df_sub = power_df[power_df["Group"] == group]
-            simuran.set_plot_style()
             sns.lineplot(
                 data=coherence_df_sub,
                 x="Frequency (Hz)",
@@ -564,6 +618,48 @@ def main(
                 dpi=400,
             )
             plt.close("all")
+
+        # Choice - lesion vs ctrl coherence when Incorrect and correct
+        power_df["Trial result"] = power_df["Trial"]
+        power_df_sub_bit = power_df[
+            (power_df["Part"] == "choice") & (power_df["Trial"] != "Forced")
+        ]
+        sns.lineplot(
+            data=power_df_sub_bit,
+            x="Frequency (Hz)",
+            y="Power (dB)",
+            hue="Group",
+            style="Trial result",
+            estimator=np.median,
+        )
+        simuran.despine()
+        plt.savefig(
+            os.path.join(here, "..", "sim_results", "tmaze", "choice_power_ci.pdf"),
+            dpi=400,
+        )
+        plt.close("all")
+
+        coherence_df["Trial result"] = coherence_df["Trial"]
+        coherence_df_sub_bit = coherence_df[
+            (coherence_df["Part"] == "choice") & (coherence_df["Trial"] != "Forced")
+        ]
+
+        sns.lineplot(
+            data=coherence_df_sub_bit,
+            x="Frequency (Hz)",
+            y="Coherence",
+            hue="Group",
+            style="Trial result",
+            ci=95,
+            estimator=np.median,
+        )
+        plt.ylim(0, 1)
+        simuran.despine()
+        plt.savefig(
+            os.path.join(here, "..", "sim_results", "tmaze", "choice_coherence_ci.pdf"),
+            dpi=400,
+        )
+        plt.close("all")
 
     # Try to decode pass and fail trials.
     if not os.path.exists(decoding_loc) or overwrite:
