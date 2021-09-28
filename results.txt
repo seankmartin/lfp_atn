@@ -1,24 +1,26 @@
 task_list_openfield
 	Purpose -- List the recordings that are analysed in openfield.
 	Main dataframes
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\fn_list_recordings\merge--fn_list_recordings.csv
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\fn_list_recordings\merge--fn_list_recordings.csv
 		Headers
 			Recording_directory
 			Recording_name
 task_coherence
 	Purpose -- Analyse coherence between SUB and RSC in the openfield data.
 	Main dataframes
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\fn_coherence\merge--fn_coherence.csv
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\fn_coherence\merge--fn_coherence.csv
 		Headers
 			Recording_directory
 			Recording_name
+			Theta_Coherence
+			Delta_Coherence
 	Main figures
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_coherence.pdf
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_coherence_ci.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_coherence.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_coherence_ci.pdf
 task_lfp_power
 	Purpose -- Power analysis within the openfield in SUB and RSC.
 	Main dataframes
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\fn_spectra\merge--fn_spectra.csv
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\fn_spectra\merge--fn_spectra.csv
 		Headers
 			Recording_directory
 			Recording_name
@@ -36,36 +38,36 @@ task_lfp_power
 			RSC_total
 			RSC_delta_rel
 			RSC_theta_rel
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\saved\ca1_power_results.csv
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\saved\ca1_power_results.csv
 		Headers
 			frequency
 			power
 	Main figures
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_spectra--foof--RSCcombined.pdf
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_spectra--foof--SUBcombined.pdf
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_spectra--rsc--power.pdf
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_spectra--rsc--power_ci.pdf
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_spectra--sub--power.pdf
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_spectra--sub--power_ci.pdf
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\saved\ca1_power_final.pdf
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\saved\ca1_power_final_ci.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_spectra--foof--RSCcombined.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_spectra--foof--SUBcombined.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_spectra--rsc--power.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_spectra--rsc--power_ci.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_spectra--sub--power.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_spectra--sub--power_ci.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\saved\ca1_power_final.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\saved\ca1_power_final_ci.pdf
 task_lfp_speed
 	Purpose -- Relation of LFP power and speed in openfield.
 	Main dataframes
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\fn_speed_theta\merge--fn_speed_theta.csv
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\fn_speed_theta\merge--fn_speed_theta.csv
 		Headers
-			source_dir
-			source_name
+			Recording_directory
+			Recording_name
 			results_speed_lfp_amp_mean_speed
 			results_speed_lfp_amp_duration
 			results_speed_lfp_amp_distance
 	Main figures
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_speed_theta--sub--speed--theta_ci.pdf
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_speed_theta--rsc--speed--theta_ci.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_speed_theta--sub--speed--theta_ci.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\run_speed_theta--rsc--speed--theta_ci.pdf
 task_speed_ibi
 	Purpose -- Speed to IBI and firing rate relationship.
 	Main dataframes
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_ibi\CTRL_Lesion_cells_filled_recording_speed_ibi_results.csv
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_ibi\CTRL_Lesion_cells_filled_recording_speed_ibi_results.csv
 		Headers
 			Directory
 			Filename
@@ -87,11 +89,11 @@ task_speed_ibi
 			class
 			class_2
 	Main figures
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\Speed_IBI_Median.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\summary\Speed_IBI_Median.pdf
 task_spike_lfp
 	Purpose -- Spike to LFP relationship.
 	Main dataframes
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp\CTRL_Lesion_cells_filled_eeg_recording_spike_lfp_results.csv
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp\CTRL_Lesion_cells_filled_eeg_recording_spike_lfp_results.csv
 		Headers
 			Directory
 			Filename
@@ -121,7 +123,7 @@ task_spike_lfp
 			AnNo
 			class
 			class_2
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp\CTRL_Lesion_cells_filled_eeg__sfc_sub.csv
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp\CTRL_Lesion_cells_filled_eeg__sfc_sub.csv
 		Headers
 			Group
 			SFC
@@ -129,18 +131,22 @@ task_spike_lfp
 			Frequency (Hz)
 			Spatial
 	Main figures
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp\average_sfc_sub.pdf
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp\average_sfc_rsc.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp\average_sfc_sub.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp\average_sfc_shuffled_sub.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp\average_sta_sub.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp\average_sfc_rsc.pdf
 task_tmaze
 	Purpose -- T-maze coherence around decision time.
 	Main dataframes
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\tmaze-times_results.csv
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\tmaze-times_results.csv
 		Headers
 			location
 			session
 			animal
 			test
 			choice
+			part
+			trial
 			SUB_delta
 			SUB_theta
 			RSC_delta
@@ -149,7 +155,9 @@ task_tmaze
 			Delta_coherence
 			Full_theta_coherence
 			Full_delta_coherence
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\coherence_full.csv
+			Peak 12Hz Theta coherence
+			Group
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\coherence_full.csv
 		Headers
 			Frequency (Hz)
 			Coherence
@@ -157,13 +165,23 @@ task_tmaze
 			Group
 			Test
 			Session
+			Part
+			Trial
 	Main figures
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\coherence_ci.pdf
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\coherence.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\Control--coherence_ci.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\Control--coherence.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\Control--power_ci.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\Lesion (ATNx)--coherence_ci.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\Lesion (ATNx)--coherence.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\Lesion (ATNx)--power_ci.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\bar--coherence.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\choice_coherence_ci.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\bar--coherence--delta.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\tmaze\choice_power_ci.pdf
 task_muscimol_sta
 	Purpose -- Spike to LFP relationship in muscimol data.
 	Main dataframes
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp_musc\musc_cells_grab_recording_spike_lfp_results.csv
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp_musc\musc_cells_grab_recording_spike_lfp_results.csv
 		Headers
 			Directory
 			Filename
@@ -177,6 +195,8 @@ task_muscimol_sta
 			Mean_Phase_Count_RSC
 			Resultant_Phase_Vector_RSC
 			Phase_Vector_95_RSC
+			Theta_SFC_SUB
+			Theta_SFC_RSC
 			STA_SUB
 			SFC_SUB
 			STA_RSC
@@ -185,8 +205,9 @@ task_muscimol_sta
 			Frequency
 			RandomSFC_SUB
 			RandomSFC_RSC
+			Spatial
 			Mapping
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp_musc\musc_cells_grab__sfc_sub.csv
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp_musc\musc_cells_grab__sfc_sub.csv
 		Headers
 			Group
 			SFC
@@ -194,5 +215,9 @@ task_muscimol_sta
 			Frequency (Hz)
 			Spatial
 	Main figures
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp_musc\average_sfc_sub.pdf
-		e:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp_musc\average_sfc_rsc.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp_musc\average_sfc_sub.pdf
+		E:\Repos\lfp_atn\lfp_atn_simuran\sim_results\spike_lfp_musc\average_sfc_rsc.pdf
+task_summarise_results
+	Purpose -- Unknown reason
+task_stats
+	Purpose -- Unknown reason
