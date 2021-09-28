@@ -97,10 +97,10 @@ def task_spike_lfp():
 def task_tmaze():
     base_ = os.path.join(here, "lfp_atn_simuran", "tmaze")
     dependencies = [
-        os.path.join(base_, "results", "tmaze-times.xlsx"),
-        os.path.join(base_, "tmaze_analyse.py"),
+        os.path.join(base_, "results", "tmaze-times.csv"),
+        os.path.join(base_, "t_maze_analyse.py"),
     ]
-    targets = [os.path.join(base_, "results", "tmaze-times_results.xlsx")]
+    targets = [os.path.join(base_, "results", "tmaze-times_results.csv")]
 
     location = os.path.abspath(os.path.join(base_, "t_maze_analyse.py"))
     action = f"python {location} -cfg {main_cfg_path} -d {dirname}"
