@@ -468,10 +468,15 @@ class LFPClean(object):
             if manual:
                 bit = ""
             if ica_fname is None:
-                ica_fname = (
-                    os.path.splitext(os.path.basename(signals[0].source_file))[0]
-                    + f"{bit}-ica.fif.gz"
-                )
+                if os.path.basename(signals[0].source_file) != "<unknown>":
+                    ica_fname = (
+                        os.path.splitext(os.path.basename(signals[0].source_file))[0]
+                        + f"{bit}-ica.fif.gz"
+                    )
+                else:
+                    val = np.round(np.mean(signals[0].samples), 3)
+                    name = str(val).replace(".", "-")
+                    ica_fname = os.path.join(name) + f"{bit}-ica.fif.gz"
             elif not ica_fname.endswith("-ica.fif.gz"):
                 if not ica_fname.endswith("-ica.fif"):
                     ica_fname = os.path.splitext(ica_fname)[0] + f"{bit}-ica.fif.gz"
