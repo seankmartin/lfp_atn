@@ -130,6 +130,8 @@ def main():
     ]
     fig_list = [
         os.path.join(results_dir, "spike_lfp", "average_sfc_sub.pdf"),
+        os.path.join(results_dir, "spike_lfp", "average_sfc_shuffled_sub.pdf"),
+        os.path.join(results_dir, "spike_lfp", "average_sta_sub.pdf"),
         os.path.join(results_dir, "spike_lfp", "average_sfc_rsc.pdf"),
     ]
     id_["task_spike_lfp"] = {"figs": fig_list, "dfs": df_list}
@@ -146,6 +148,10 @@ def main():
         os.path.join(results_dir, "tmaze", "Lesion (ATNx)--coherence_ci.pdf"),
         os.path.join(results_dir, "tmaze", "Lesion (ATNx)--coherence.pdf"),
         os.path.join(results_dir, "tmaze", "Lesion (ATNx)--power_ci.pdf"),
+        os.path.join(results_dir, "tmaze", "bar--coherence.pdf"),
+        os.path.join(results_dir, "tmaze", "choice_coherence_ci.pdf"),
+        os.path.join(results_dir, "tmaze", "bar--coherence--delta.pdf"),
+        os.path.join(results_dir, "tmaze", "choice_power_ci.pdf"),
     ]
     tmaze_dict = {
         "reason": "T-maze coherence around decision time.",

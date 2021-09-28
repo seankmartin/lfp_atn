@@ -302,14 +302,15 @@ def spike_lfp_stats(overall_kwargs):
 
 
 def tmaze_stats(overall_kwargs):
+    pt("Tmaze stats")
     df, control_df, lesion_df = get_df("tmaze--tmaze-times_results.csv")
     bit_to_get = (control_df["part"] == "choice") & (
-        control_df["trial"] == "choice correct"
+        control_df["trial"] == "Correct"
     )
     control_choice = control_df[bit_to_get]
 
     bit_to_get = (lesion_df["part"] == "choice") & (
-        lesion_df["trial"] == "choice correct"
+        lesion_df["trial"] == "Correct"
     )
     lesion_choice = lesion_df[bit_to_get]
 
@@ -342,12 +343,12 @@ def tmaze_stats(overall_kwargs):
     process_fig(res, "t-maze_subpower_correct.pdf")
 
     bit_to_get = (control_df["part"] == "choice") & (
-        control_df["trial"] == "choice errors"
+        control_df["trial"] == "Incorrect"
     )
     control_choice = control_df[bit_to_get]
 
     bit_to_get = (lesion_df["part"] == "choice") & (
-        lesion_df["trial"] == "choice errors"
+        lesion_df["trial"] == "Incorrect"
     )
     lesion_choice = lesion_df[bit_to_get]
 
@@ -380,12 +381,12 @@ def tmaze_stats(overall_kwargs):
     process_fig(res, "t-maze_subpower_incorrect.pdf")
 
     bit_to_get = (control_df["part"] == "choice") & (
-        control_df["trial"] == "choice correct"
+        control_df["trial"] == "Correct"
     )
     control_choice1 = control_df[bit_to_get]
 
     bit_to_get = (control_df["part"] == "choice") & (
-        control_df["trial"] == "choice errors"
+        control_df["trial"] == "Incorrect"
     )
     control_choice2 = control_df[bit_to_get]
 
@@ -405,12 +406,12 @@ def tmaze_stats(overall_kwargs):
     process_fig(res, "t-maze_coherence_ctrl.pdf")
 
     bit_to_get = (lesion_df["part"] == "choice") & (
-        lesion_df["trial"] == "choice correct"
+        lesion_df["trial"] == "Correct"
     )
     lesion_choice1 = lesion_df[bit_to_get]
 
     bit_to_get = (lesion_df["part"] == "choice") & (
-        lesion_df["trial"] == "choice errors"
+        lesion_df["trial"] == "Incorrect"
     )
     lesion_choice2 = lesion_df[bit_to_get]
 
