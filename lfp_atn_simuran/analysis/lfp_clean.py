@@ -334,7 +334,7 @@ class LFPClean(object):
                     msg = f"Signals from {data.source_file} -- {extra_bad} don't agree"
                 else:
                     msg = f"Signals {extra_bad} don't agree"
-                raise RuntimeError(msg)
+                print(msg)
             bad_chans = [s.channel for s in signals if getattr(s, prop) not in channels]
             bad_chans += [signals[i].channel for i in extra_bad]
             results["bad_channels"] = bad_chans
