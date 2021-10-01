@@ -76,7 +76,9 @@ def plot_recording_coherence(
     f, Cxy, g = plot_coherence(v1, v2, ax, sr, group, fmin=fmin, fmax=fmax)
     theta_co = Cxy[np.nonzero((f >= theta_min) & (f <= theta_max))]
     delta_co = Cxy[np.nonzero((f >= delta_min) & (f <= delta_max))]
+    peak_theta_co = Cxy[np.nonzero((f >= 9.0) & (f <= 10.0))]
     result["theta_coherence"] = np.nanmean(theta_co)
+    result["Peak 9_p5Hz Theta coherence"] = np.nanmax(peak_theta_co)
     result["delta_coherence"] = np.nanmean(delta_co)
     result["full_res"] = g
 

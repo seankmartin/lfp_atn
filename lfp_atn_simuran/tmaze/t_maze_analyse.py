@@ -343,7 +343,7 @@ def main(
                         max_theta_coherence = np.nanmean(theta_co)
                         max_delta_coherence = np.nanmean(delta_co)
 
-                        theta_co_peak = Cxy[np.nonzero((f >= 12.0) & (f <= 13.0))]
+                        theta_co_peak = Cxy[np.nonzero((f >= 11.0) & (f <= 13.0))]
                         peak_theta_coherence = np.nanmax(theta_co_peak)
 
                         if trial_type == "forced":

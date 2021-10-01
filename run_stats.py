@@ -121,8 +121,8 @@ def coherence_stats(overall_kwargs):
         **{"value": "theta coherence (unitless)"},
     }
     res = mwu(
-        control_df["Theta_Coherence"],
-        lesion_df["Theta_Coherence"],
+        control_df["Peak_Theta_coherence"],
+        lesion_df["Peak_Theta_coherence"],
         t1_kwargs,
         do_plot=True,
     )
@@ -322,8 +322,8 @@ def tmaze_stats(overall_kwargs):
     }
 
     res = mwu(
-        control_choice["Theta_coherence"],
-        lesion_choice["Theta_coherence"],
+        control_choice["Peak 12Hz Theta coherence"],
+        lesion_choice["Peak 12Hz Theta coherence"],
         t1_kwargs,
         do_plot=True,
     )
@@ -360,8 +360,8 @@ def tmaze_stats(overall_kwargs):
     }
 
     res = mwu(
-        control_choice["Theta_coherence"],
-        lesion_choice["Theta_coherence"],
+        control_choice["Peak 12Hz Theta coherence"],
+        lesion_choice["Peak 12Hz Theta coherence"],
         t2_kwargs,
         do_plot=True,
     )
@@ -398,8 +398,8 @@ def tmaze_stats(overall_kwargs):
     }
 
     res = mwu(
-        control_choice1["Theta_coherence"],
-        control_choice2["Theta_coherence"],
+        control_choice1["Peak 12Hz Theta coherence"],
+        control_choice2["Peak 12Hz Theta coherence"],
         t3_kwargs,
         do_plot=True,
     )
@@ -423,8 +423,8 @@ def tmaze_stats(overall_kwargs):
     }
 
     res = mwu(
-        lesion_choice1["Theta_coherence"],
-        lesion_choice2["Theta_coherence"],
+        lesion_choice1["Peak 12Hz Theta coherence"],
+        lesion_choice2["Peak 12Hz Theta coherence"],
         t4_kwargs,
         do_plot=True,
     )

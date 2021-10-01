@@ -81,11 +81,12 @@ def setup_output():
     # This should list the results to save to a csv
     save_list = [
         ("results", "plot_recording_coherence", "theta_coherence"),
-        ("results", "plot_recording_coherence", "delta_coherence")
+        ("results", "plot_recording_coherence", "delta_coherence"),
+        ("results", "plot_recording_coherence", "Peak 9_p5Hz Theta coherence"),
     ]
 
     # You can name each of these outputs
-    output_names = ["Theta Coherence", "Delta Coherence"]
+    output_names = ["Theta Coherence", "Delta Coherence", "Peak Theta coherence"]
 
     return save_list, output_names
 
