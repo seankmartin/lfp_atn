@@ -1,24 +1,20 @@
 import re
 
+import numpy as np
 import simuran
 import typer
 from simuran.loaders.nc_loader import NCLoader
 
 
 def main(path_to_files: str, output_path: str) -> None:
-    def add_mapping_to_df(input_df, **kwargs):
-        # TODO make this based on file name
-        df = clean_data(input_df)
-        df["Mapping"] = "TBD"
-        return input_df
-
     simuran.index_ephys_files(
         start_dir=path_to_files,
         loader=NCLoader(system="Axona", loader_kwargs={"pos_extension": ".pos"}),
         output_path=output_path,
         overwrite=True,
-        post_process_fn=add_mapping_to_df,
+        post_process_fn=clean_data,
     )
+
 
 def get_rat_name(s):
     # '''Get rat name from filename'''
@@ -373,7 +369,7 @@ def clean_data(df, **kwargs):
     df["recording_name"] = df.filename.apply(lambda x: x[:-4])
     # Rat name
     df["rat"] = df.recording_name.apply(get_rat_name)
-    df["name_folder"] = df.folder.apply(get_rat_name_folder)
+    df["name_folder"] = df.directory.apply(get_rat_name_folder)
     df["rat"] = df["rat"].combine_first(df["name_folder"])
     df.drop("name_folder", axis=1, inplace=True)
     # number of channels
@@ -385,7 +381,7 @@ def clean_data(df, **kwargs):
     df.drop("sleep_folder", axis=1, inplace=True)
     # get mazes
     df["maze"] = df.filename.apply(get_maze)
-    df["maze_folder"] = df.folder.apply(get_maze_from_folder)
+    df["maze_folder"] = df.directory.apply(get_maze_from_folder)
     df["maze"] = df["maze"].combine_first(df["maze_folder"])
     df.drop("maze_folder", axis=1, inplace=True)
     # get habituation
@@ -405,11 +401,11 @@ def clean_data(df, **kwargs):
     df["light"] = df.filename.apply(get_light_dark)
     df["light"] = df["light"].fillna(11)
     # Cleaning
-    df["folder"] = df.folder.apply(clean_setup_files)
-    df.dropna(subset=["folder"], inplace=True)
+    df["directory"] = df.directory.apply(clean_setup_files)
+    df.dropna(subset=["directory"], inplace=True)
     # Combine datetime
     # Dates from file
-    fold_file = df[["folder", "recording_name"]].values
+    fold_file = df[["directory", "recording_name"]].values
     df["date"] = [get_date_from_files(fold, file) for fold, file in fold_file]
     df.loc[df.date.isnull(), "date"] = df.loc[df.date.isnull(), "recording_name"].apply(
         get_missing_dates
@@ -427,6 +423,7 @@ def clean_data(df, **kwargs):
     df["mapping"] = df.rat.apply(animal_to_mapping)
 
     return df
+
 
 if __name__ == "__main__":
     typer.run(main)

@@ -13,4 +13,4 @@ rule test:
     input:
         "results/axona_file_index.csv"
     shell:
-        r"python E:\Repos\SIMURAN\simuran\main\main_from_template.py lfp_atn_simuran\batch_params\CSR1-openfield.py lfp_atn_simuran\configs\default.py lfp_atn_simuran\functions\fn_spectra.py"
+        r"python E:\Repos\SIMURAN\simuran\main\main_from_template.py lfp_atn_simuran\batch_params\CSR1-openfield.py lfp_atn_simuran\configs\default.py lfp_atn_simuran\functions\fn_spectra.py --data-filterpath lfp_atn_simuran\table_params\CSR1.yaml"
