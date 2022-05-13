@@ -1,10 +1,10 @@
 """simuran_batch_params.py describes behaviour for recursing through directories."""
 
 import os
-from lfp_atn_simuran.analysis.speed_ibi import (
+from lfp_atn_simuran.Scripts.speed_ibi import (
     recording_speed_ibi,
     recording_ibi_headings,
-    combine_results
+    combine_results,
 )
 
 # The magic string __dirname__, is replaced by a directory name that is passed through command line
@@ -26,9 +26,7 @@ fn_to_run = recording_speed_ibi
 after_fn = combine_results
 
 # out_dir can be left as None to automatically name
-out_dir = os.path.abspath(
-    os.path.join(this_dirname, "..", "sim_results", "spike_ibi")
-)
+out_dir = os.path.abspath(os.path.join(this_dirname, "..", "sim_results", "spike_ibi"))
 
 # Arguments to pass into fn_to_run
 fn_args = [out_dir, dirname]

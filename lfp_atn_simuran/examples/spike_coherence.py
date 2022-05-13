@@ -4,7 +4,7 @@ import simuran
 import matplotlib.pyplot as plt
 
 try:
-    from lfp_atn_simuran.analysis.spike_lfp import nc_sfc
+    from lfp_atn_simuran.Scripts.spike_lfp import nc_sfc
 
     do_analysis = True
 except ImportError:

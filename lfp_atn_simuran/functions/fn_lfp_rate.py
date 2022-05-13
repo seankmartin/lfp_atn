@@ -9,7 +9,7 @@ def setup_functions():
 
     # The list of functions to run, in order
     # Each function should take as its first argument a recording object
-    from lfp_atn_simuran.analysis.lfp_rate_map import lfp_rate_recording
+    from lfp_atn_simuran.Scripts.lfp_rate_map import lfp_rate_recording
 
     functions = [lfp_rate_recording]
 

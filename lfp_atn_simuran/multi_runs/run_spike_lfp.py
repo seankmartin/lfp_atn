@@ -1,7 +1,7 @@
 """simuran_batch_params.py describes behaviour for recursing through directories."""
 
 import os
-from lfp_atn_simuran.analysis.spike_lfp import (
+from lfp_atn_simuran.Scripts.spike_lfp import (
     recording_spike_lfp,
     combine_results,
     spike_lfp_headings,
@@ -27,9 +27,7 @@ after_fn = combine_results
 
 # out_dir can be left as None to automatically name
 # out_dir can be left as None to automatically name
-out_dir = os.path.abspath(
-    os.path.join(this_dirname, "..", "sim_results", "spike_lfp")
-)
+out_dir = os.path.abspath(os.path.join(this_dirname, "..", "sim_results", "spike_lfp"))
 
 # Arguments to pass into fn_to_run
 fn_args = []

@@ -22,7 +22,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from tqdm.notebook import tqdm
 import simuran
-from lfp_atn_simuran.analysis.frequency_analysis import powers
+from lfp_atn_simuran.Scripts.frequency_analysis import powers
 from fooof import FOOOFGroup
 
 # Configuration

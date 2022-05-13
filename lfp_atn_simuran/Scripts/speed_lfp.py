@@ -11,7 +11,7 @@ import pandas as pd
 import scipy.signal
 import scipy.integrate
 
-from lfp_atn_simuran.analysis.lfp_clean import LFPClean
+from lfp_atn_simuran.Scripts.lfp_clean import LFPClean
 
 
 # 3. Compare theta and speed
@@ -304,7 +304,7 @@ def combine_results(info, extra_info, **kwargs):
         n_lesion_animals += r_les / len(fname_list)
 
     simuran.print(f"{n_ctrl_animals} CTRL animals, {n_lesion_animals} Lesion animals")
-    
+
     out_dfname = os.path.join(out_dir, "summary", "speed_results.csv")
     df = pd.concat(df_lists, ignore_index=True)
     df_to_file(df, out_dfname)

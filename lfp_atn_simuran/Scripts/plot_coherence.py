@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import simuran
 
-from lfp_atn_simuran.analysis.lfp_clean import LFPClean
+from lfp_atn_simuran.Scripts.lfp_clean import LFPClean
 
 
 def plot_coherence(x, y, ax, fs=250, group="ATNx", fmin=1, fmax=100):

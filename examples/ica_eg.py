@@ -1,4 +1,4 @@
-from lfp_atn_simuran.analysis.lfp_clean import LFPClean
+from lfp_atn_simuran.Scripts.lfp_clean import LFPClean
 from simuran import EegArray, Eeg, SimuranFigure
 
 import numpy as np

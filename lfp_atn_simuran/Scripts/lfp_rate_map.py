@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcol
 from math import floor, ceil
 
-from lfp_atn_simuran.analysis.lfp_clean import LFPClean
+from lfp_atn_simuran.Scripts.lfp_clean import LFPClean
 import simuran
 
 

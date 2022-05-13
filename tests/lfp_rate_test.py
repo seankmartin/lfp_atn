@@ -3,8 +3,8 @@ import sys
 
 import numpy as np
 import matplotlib.pyplot as plt
-from lfp_atn_simuran.analysis.lfp_rate_map import lfp_rate, lfp_rate_plot
-from lfp_atn_simuran.analysis.lfp_clean import LFPClean
+from lfp_atn_simuran.Scripts.lfp_rate_map import lfp_rate, lfp_rate_plot
+from lfp_atn_simuran.Scripts.lfp_clean import LFPClean
 import astropy.units as u
 
 sys.path.insert(0, "..")

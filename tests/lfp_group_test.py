@@ -3,8 +3,8 @@ import simuran
 from pprint import pprint
 
 # Import from my files
-from lfp_atn_simuran.analysis.frequency_analysis import grouped_powers, powers
-from lfp_atn_simuran.analysis.lfp_clean import LFPClean
+from lfp_atn_simuran.Scripts.frequency_analysis import grouped_powers, powers
+from lfp_atn_simuran.Scripts.lfp_clean import LFPClean
 from default_recording import load_recording
 
 

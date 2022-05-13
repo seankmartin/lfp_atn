@@ -9,7 +9,7 @@ import seaborn as sns
 import pandas as pd
 from skm_pyutils.py_plot import UnicodeGrabber
 
-from lfp_atn_simuran.analysis.lfp_clean import LFPClean
+from lfp_atn_simuran.Scripts.lfp_clean import LFPClean
 
 
 def plot_psd(

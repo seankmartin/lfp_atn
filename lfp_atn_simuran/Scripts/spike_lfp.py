@@ -5,7 +5,7 @@ import simuran
 import numpy as np
 import matplotlib.pyplot as plt
 
-from lfp_atn_simuran.analysis.lfp_clean import LFPClean
+from lfp_atn_simuran.Scripts.lfp_clean import LFPClean
 from skm_pyutils.py_table import list_to_df, df_from_file, df_to_file
 from skm_pyutils.py_plot import UnicodeGrabber
 

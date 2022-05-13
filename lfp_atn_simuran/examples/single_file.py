@@ -4,9 +4,9 @@ import simuran
 from skm_pyutils.py_save import save_mixed_dict_to_csv
 
 try:
-    from lfp_atn_simuran.analysis.lfp_clean import LFPClean
-    from lfp_atn_simuran.analysis.plot_coherence import plot_recording_coherence
-    from lfp_atn_simuran.analysis.frequency_analysis import powers
+    from lfp_atn_simuran.Scripts.lfp_clean import LFPClean
+    from lfp_atn_simuran.Scripts.plot_coherence import plot_recording_coherence
+    from lfp_atn_simuran.Scripts.frequency_analysis import powers
 
     do_analysis = True
 except ImportError:

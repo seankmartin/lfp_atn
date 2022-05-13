@@ -1,7 +1,7 @@
 import os
 
+from lfp_atn_simuran.Scripts.lfp_clean import LFPClean
 from simuran.plot.figure import SimuranFigure
-from lfp_atn_simuran.analysis.lfp_clean import LFPClean
 
 
 def mne_plot(recording, base_dir, figures, **kwargs):

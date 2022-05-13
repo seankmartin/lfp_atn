@@ -17,7 +17,7 @@ import seaborn as sns
 from scipy.signal import welch
 
 try:
-    from lfp_atn_simuran.analysis.lfp_clean import LFPClean
+    from lfp_atn_simuran.Scripts.lfp_clean import LFPClean
 
     do_analysis = True
 except ImportError:
